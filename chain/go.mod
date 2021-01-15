@@ -24,7 +24,7 @@ require (
 	github.com/poy/onpar v1.0.1 // indirect
 	github.com/rakyll/statik v0.1.7 // indirect
 	github.com/segmentio/kafka-go v0.3.7
-	github.com/spf13/cobra v1.0.0
+	github.com/spf13/cobra v1.1.1
 	github.com/spf13/viper v1.7.1
 	github.com/stretchr/testify v1.6.1
 	github.com/syndtr/goleveldb v1.0.1-0.20190923125748-758128399b1d
