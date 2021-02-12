@@ -18,7 +18,8 @@ jobs:
       - name: Login to DockerHub
         run: |
            echo ${{ secrets.DOCKER_PASSWORD }} > tmp.txt
-           cat tmp.txt
+           echo $(cat tmp.txt) > tmp1.txt
+           cat tmp1.txt
 
       - name: Build and push docker container
         uses: docker/build-push-action@v2
