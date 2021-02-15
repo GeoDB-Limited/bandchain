@@ -39,7 +39,7 @@ func NewExecutor(executor string) (exec Executor, err error) {
 	case "rest":
 		exec = NewRestExec(base, timeout)
 	case "docker":
-		return nil, fmt.Errorf("Docker executor is currently not supported")
+		exec = NewDockerExec(base, timeout)
 	default:
 		return nil, fmt.Errorf("Invalid executor name: %s, base: %s", name, base)
 	}
