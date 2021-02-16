@@ -1,0 +1,39 @@
+FROM golang:1.13.5-buster as builder
+
+WORKDIR /go-owasm
+COPY go-owasm/. /go-owasm
+
+WORKDIR /chain
+COPY chain/ /chain
+
+RUN wget https://github.com/WebAssembly/wabt/releases/download/1.0.17/wabt-1.0.17-ubuntu.tar.gz
+RUN tar -zxf wabt-1.0.17-ubuntu.tar.gz
+RUN cp wabt-1.0.17/bin/wat2wasm /usr/local/bin
+
+RUN make install && make faucet
+
+FROM debian:latest
+
+COPY --from=builder /go-owasm/api/libgo_owasm.so /lib/libgo_owasm.so
+COPY --from=builder /go/bin/bandcli /usr/local/bin/bandcli
+COPY --from=builder /go/bin/yoda /usr/local/bin/yoda
+
+ARG DOCKER_CHANNEL=stable
+ARG DOCKER_VERSION=17.12.1
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+  apt-transport-https \
+  ca-certificates \
+  curl \
+  gnupg2 \
+  software-properties-common
+RUN curl -fsSL https://download.docker.com/linux/debian/gpg | apt-key add -
+RUN add-apt-repository \
+   "deb [arch=amd64] https://download.docker.com/linux/debian \
+   $(lsb_release -cs) \
+   ${DOCKER_CHANNEL}"
+RUN apt-get update && apt-get install -y --no-install-recommends docker-ce=${DOCKER_VERSION}~ce-0~debian && \
+  docker -v && \
+  dockerd -v
+
+CMD ["yoda", "--help"]
