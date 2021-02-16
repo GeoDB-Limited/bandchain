@@ -19,7 +19,7 @@ COPY --from=builder /go/bin/bandcli /usr/local/bin/bandcli
 COPY --from=builder /go/bin/yoda /usr/local/bin/yoda
 
 ARG DOCKER_CHANNEL=stable
-ARG DOCKER_VERSION=17.12.1
+ARG DOCKER_VERSION=18.09.9
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
   apt-transport-https \

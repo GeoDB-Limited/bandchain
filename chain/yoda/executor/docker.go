@@ -42,7 +42,7 @@ func (e *DockerExec) Exec(code []byte, arg string, env interface{}) (ExecResult,
 	dockerArgs := append([]string{
 		"run", "--rm",
 		"-v", dir + ":/scratch:ro",
-		"--name", name,
+		"--name", name, handleEnv(env),
 		e.image,
 		"/scratch/exec",
 	}, args...)
@@ -70,4 +70,18 @@ func (e *DockerExec) Exec(code []byte, arg string, env interface{}) (ExecResult,
 		return ExecResult{}, err
 	}
 	return ExecResult{Output: output, Code: exitCode}, nil
+}
+
+func handleEnv(env interface{}) string {
+	var result string
+	switch typedEnv := env.(type) {
+	case map[string]interface{}:
+		for key, value := range typedEnv {
+			result += " --env " + key + "=" + value.(string) + " "
+		}
+	default:
+		panic("unhandled type of env")
+	}
+
+	return result
 }
