@@ -2,6 +2,7 @@ package supply
 
 import (
 	"fmt"
+	odinmint "github.com/GeoDB-Limited/odincore/chain/x/mint"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -22,17 +23,22 @@ type WrappedSupplyKeeper struct {
 	supply.Keeper
 
 	distrKeeper *distr.Keeper
+	mintKeeper  *odinmint.Keeper
 }
 
 // WrapSupplyKeeperBurnToCommunityPool creates a new instance of WrappedSupplyKeeper
 // with its distrKeeper member set to nil.
 func WrapSupplyKeeperBurnToCommunityPool(sk supply.Keeper) WrappedSupplyKeeper {
-	return WrappedSupplyKeeper{sk, nil}
+	return WrappedSupplyKeeper{sk, nil, nil}
 }
 
 // SetDistrKeeper sets distr module keeper for this WrappedSupplyKeeper instance.
 func (k *WrappedSupplyKeeper) SetDistrKeeper(distrKeeper *distr.Keeper) {
 	k.distrKeeper = distrKeeper
+}
+
+func (k *WrappedSupplyKeeper) SetMintKeeper(mintKeeper *odinmint.Keeper) {
+	k.mintKeeper = mintKeeper
 }
 
 // Logger returns a module-specific logger.
@@ -76,5 +82,32 @@ func (k WrappedSupplyKeeper) BurnCoins(ctx sdk.Context, moduleName string, amt s
 	logger.Info(fmt.Sprintf(
 		"sent %s from %s module account to community pool", amt.String(), moduleName,
 	))
+	return nil
+}
+
+// MintCoins does not create any new coins, just gets them from the community pull
+func (k WrappedSupplyKeeper) MintCoins(ctx sdk.Context, moduleName string, amt sdk.Coins) error {
+	vanillaMinting := k.mintKeeper.GetParams(ctx).MintAir
+	if vanillaMinting {
+		return k.Keeper.MintCoins(ctx, moduleName, amt)
+	}
+	acc := k.GetModuleAccount(ctx, moduleName)
+	if acc == nil {
+		panic(sdkerrors.Wrapf(sdkerrors.ErrUnknownAddress, "module account %s does not exist", moduleName))
+	}
+
+	if !acc.HasPermission(supply.Minter) {
+		panic(sdkerrors.Wrapf(sdkerrors.ErrUnauthorized, "module account %s does not have permissions to mint tokens", moduleName))
+	}
+
+	logger := k.Logger(ctx)
+	err := k.SendCoinsFromModuleToModule(ctx, distr.ModuleName, moduleName, amt)
+	if err != nil {
+		err = sdkerrors.Wrap(err, fmt.Sprintf("failed to mint %s from %s module account", amt.String(), moduleName))
+		logger.Error(err.Error())
+	} else {
+		logger.Info(fmt.Sprintf("minted %s from %s module account", amt.String(), moduleName))
+	}
+
 	return nil
 }

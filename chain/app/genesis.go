@@ -2,6 +2,7 @@ package app
 
 import (
 	"encoding/json"
+	odinmint "github.com/GeoDB-Limited/odincore/chain/x/mint"
 	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -12,7 +13,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/evidence"
 	"github.com/cosmos/cosmos-sdk/x/genutil"
 	"github.com/cosmos/cosmos-sdk/x/gov"
-	"github.com/cosmos/cosmos-sdk/x/mint"
 	"github.com/cosmos/cosmos-sdk/x/slashing"
 	"github.com/cosmos/cosmos-sdk/x/staking"
 	"github.com/cosmos/cosmos-sdk/x/supply"
@@ -32,7 +32,7 @@ func NewDefaultGenesisState() GenesisState {
 	authGenesis := auth.DefaultGenesisState()
 	stakingGenesis := staking.DefaultGenesisState()
 	distrGenesis := distr.DefaultGenesisState()
-	mintGenesis := mint.DefaultGenesisState()
+	mintGenesis := odinmint.DefaultGenesisState()
 	govGenesis := gov.DefaultGenesisState()
 	crisisGenesis := crisis.DefaultGenesisState()
 	slashingGenesis := slashing.DefaultGenesisState()
@@ -57,7 +57,7 @@ func NewDefaultGenesisState() GenesisState {
 		bank.ModuleName:     bank.AppModuleBasic{}.DefaultGenesis(),
 		supply.ModuleName:   supply.AppModuleBasic{}.DefaultGenesis(),
 		staking.ModuleName:  cdc.MustMarshalJSON(stakingGenesis),
-		mint.ModuleName:     cdc.MustMarshalJSON(mintGenesis),
+		odinmint.ModuleName: cdc.MustMarshalJSON(mintGenesis),
 		distr.ModuleName:    cdc.MustMarshalJSON(distrGenesis),
 		gov.ModuleName:      cdc.MustMarshalJSON(govGenesis),
 		crisis.ModuleName:   cdc.MustMarshalJSON(crisisGenesis),

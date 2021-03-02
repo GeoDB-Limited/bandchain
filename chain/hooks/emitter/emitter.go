@@ -3,6 +3,7 @@ package emitter
 import (
 	"context"
 	"encoding/json"
+	odinmint "github.com/GeoDB-Limited/odincore/chain/x/mint"
 	"strings"
 	"time"
 
@@ -13,7 +14,6 @@ import (
 	distr "github.com/cosmos/cosmos-sdk/x/distribution"
 	"github.com/cosmos/cosmos-sdk/x/genutil"
 	"github.com/cosmos/cosmos-sdk/x/gov"
-	"github.com/cosmos/cosmos-sdk/x/mint"
 	"github.com/cosmos/cosmos-sdk/x/staking"
 	"github.com/cosmos/cosmos-sdk/x/supply"
 	"github.com/segmentio/kafka-go"
@@ -43,7 +43,7 @@ type Hook struct {
 	bankKeeper    bank.Keeper
 	supplyKeeper  supply.Keeper
 	stakingKeeper staking.Keeper
-	mintKeeper    mint.Keeper
+	mintKeeper    odinmint.Keeper
 	distrKeeper   distr.Keeper
 	govKeeper     gov.Keeper
 	oracleKeeper  oracle.Keeper
@@ -52,7 +52,7 @@ type Hook struct {
 // NewHook creates an emitter hook instance that will be added in Band App.
 func NewHook(
 	cdc *codec.Codec, accountKeeper auth.AccountKeeper, bankKeeper bank.Keeper, supplyKeeper supply.Keeper,
-	stakingKeeper staking.Keeper, mintKeeper mint.Keeper, distrKeeper distr.Keeper, govKeeper gov.Keeper,
+	stakingKeeper staking.Keeper, mintKeeper odinmint.Keeper, distrKeeper distr.Keeper, govKeeper gov.Keeper,
 	oracleKeeper keeper.Keeper, kafkaURI string, emitStartState bool,
 ) *Hook {
 	paths := strings.SplitN(kafkaURI, "@", 2)

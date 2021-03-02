@@ -33,11 +33,11 @@
     "mint": {
       "minter": {
         "inflation": "0.120000000000000000",
-        "annual_provisions": "0.120000000000000000"
+        "annual_provisions": "0.000000000000000000"
       },
       "params": {
         "mint_denom": "loki",
-        "inflation_rate_change": "0.000000000000000000",
+        "inflation_rate_change": "0.130000000000000000",
         "inflation_max": "0.120000000000000000",
         "inflation_min": "0.120000000000000000",
         "goal_bonded": "0.670000000000000000",
@@ -47,16 +47,7 @@
     },
     "upgrade": {},
     "supply": {
-      "supply": [
-        {
-          "denom": "loki",
-          "amount": "100000000000000"
-        },
-        {
-          "denom": "geo",
-          "amount": "1000000000000000"
-        }
-      ]
+      "supply": []
     },
     "oracle": {
       "params": {
