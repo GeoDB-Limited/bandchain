@@ -7,6 +7,7 @@ import (
 
 	"github.com/spf13/viper"
 
+	odinmint "github.com/GeoDB-Limited/odincore/chain/x/mint"
 	bam "github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -20,7 +21,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/evidence"
 	"github.com/cosmos/cosmos-sdk/x/genutil"
 	"github.com/cosmos/cosmos-sdk/x/gov"
-	"github.com/cosmos/cosmos-sdk/x/mint"
 	"github.com/cosmos/cosmos-sdk/x/params"
 	paramsclient "github.com/cosmos/cosmos-sdk/x/params/client"
 	"github.com/cosmos/cosmos-sdk/x/slashing"
@@ -57,7 +57,7 @@ var (
 		bank.AppModuleBasic{},
 		supply.AppModuleBasic{},
 		staking.AppModuleBasic{},
-		mint.AppModuleBasic{},
+		odinmint.AppModuleBasic{},
 		distr.AppModuleBasic{},
 		gov.NewAppModuleBasic(paramsclient.ProposalHandler, distr.ProposalHandler, upgradeclient.ProposalHandler),
 		params.AppModuleBasic{},
@@ -71,7 +71,7 @@ var (
 	maccPerms = map[string][]string{
 		auth.FeeCollectorName:     nil,
 		distr.ModuleName:          nil,
-		mint.ModuleName:           {supply.Minter},
+		odinmint.ModuleName:       {supply.Minter},
 		staking.BondedPoolName:    {supply.Burner, supply.Staking},
 		staking.NotBondedPoolName: {supply.Burner, supply.Staking},
 		gov.ModuleName:            {supply.Burner},
@@ -96,7 +96,7 @@ type BandApp struct {
 	SupplyKeeper   supply.Keeper
 	StakingKeeper  staking.Keeper
 	SlashingKeeper slashing.Keeper
-	MintKeeper     mint.Keeper
+	MintKeeper     odinmint.Keeper
 	DistrKeeper    distr.Keeper
 	GovKeeper      gov.Keeper
 	CrisisKeeper   crisis.Keeper
@@ -145,7 +145,7 @@ func NewBandApp(
 	bApp.SetCommitMultiStoreTracer(traceStore)
 	bApp.SetAppVersion(version.Version)
 	keys := sdk.NewKVStoreKeys(
-		bam.MainStoreKey, auth.StoreKey, supply.StoreKey, staking.StoreKey, mint.StoreKey,
+		bam.MainStoreKey, auth.StoreKey, supply.StoreKey, staking.StoreKey, odinmint.StoreKey,
 		distr.StoreKey, slashing.StoreKey, gov.StoreKey, params.StoreKey, upgrade.StoreKey,
 		evidence.StoreKey, oracle.StoreKey,
 	)
@@ -162,7 +162,7 @@ func NewBandApp(
 	authSubspace := app.ParamsKeeper.Subspace(auth.DefaultParamspace)
 	bankSubspace := app.ParamsKeeper.Subspace(bank.DefaultParamspace)
 	stakingSubspace := app.ParamsKeeper.Subspace(staking.DefaultParamspace)
-	mintSubspace := app.ParamsKeeper.Subspace(mint.DefaultParamspace)
+	mintSubspace := app.ParamsKeeper.Subspace(odinmint.DefaultParamspace)
 	distrSubspace := app.ParamsKeeper.Subspace(distr.DefaultParamspace)
 	slashingSubspace := app.ParamsKeeper.Subspace(slashing.DefaultParamspace)
 	evidenceSubspace := app.ParamsKeeper.Subspace(evidence.DefaultParamspace)
@@ -176,10 +176,11 @@ func NewBandApp(
 	// wrappedSupplyKeeper overrides burn token behavior to instead transfer to community pool.
 	wrappedSupplyKeeper := bandsupply.WrapSupplyKeeperBurnToCommunityPool(app.SupplyKeeper)
 	stakingKeeper := staking.NewKeeper(cdc, keys[staking.StoreKey], &wrappedSupplyKeeper, stakingSubspace)
-	app.MintKeeper = mint.NewKeeper(cdc, keys[mint.StoreKey], mintSubspace, &stakingKeeper, app.SupplyKeeper, auth.FeeCollectorName)
+	app.MintKeeper = odinmint.NewKeeper(cdc, keys[odinmint.StoreKey], mintSubspace, &stakingKeeper, &wrappedSupplyKeeper, auth.FeeCollectorName)
 	app.DistrKeeper = distr.NewKeeper(cdc, keys[distr.StoreKey], distrSubspace, &stakingKeeper, app.SupplyKeeper, auth.FeeCollectorName, app.ModuleAccountAddrs())
 	// DistrKeeper must be set afterward due to the circular reference between supply-staking-distr.
 	wrappedSupplyKeeper.SetDistrKeeper(&app.DistrKeeper)
+	wrappedSupplyKeeper.SetMintKeeper(&app.MintKeeper)
 	app.CrisisKeeper = crisis.NewKeeper(crisisSubspace, invCheckPeriod, app.SupplyKeeper, auth.FeeCollectorName)
 	app.SlashingKeeper = slashing.NewKeeper(cdc, keys[slashing.StoreKey], &stakingKeeper, slashingSubspace)
 	app.UpgradeKeeper = upgrade.NewKeeper(skipUpgradeHeights, keys[upgrade.StoreKey], cdc)
@@ -207,7 +208,7 @@ func NewBandApp(
 		supply.NewAppModule(app.SupplyKeeper, app.AccountKeeper),
 		crisis.NewAppModule(&app.CrisisKeeper),
 		gov.NewAppModule(app.GovKeeper, app.AccountKeeper, app.SupplyKeeper),
-		mint.NewAppModule(app.MintKeeper),
+		odinmint.NewAppModule(app.MintKeeper),
 		slashing.NewAppModule(app.SlashingKeeper, app.AccountKeeper, app.StakingKeeper),
 		distr.NewAppModule(app.DistrKeeper, app.AccountKeeper, app.SupplyKeeper, app.StakingKeeper),
 		staking.NewAppModule(app.StakingKeeper, app.AccountKeeper, app.SupplyKeeper),
@@ -219,7 +220,7 @@ func NewBandApp(
 	// NOTE: During begin block slashing happens after distr.BeginBlocker so that there is nothing left
 	// over in the validator fee pool, so as to keep the CanWithdrawInvariant invariant.
 	app.mm.SetOrderBeginBlockers(
-		upgrade.ModuleName, mint.ModuleName, oracle.ModuleName, distr.ModuleName, slashing.ModuleName,
+		upgrade.ModuleName, odinmint.ModuleName, oracle.ModuleName, distr.ModuleName, slashing.ModuleName,
 		evidence.ModuleName, staking.ModuleName,
 	)
 	app.mm.SetOrderEndBlockers(
@@ -229,7 +230,7 @@ func NewBandApp(
 	// properly initialized with tokens from genesis accounts.
 	app.mm.SetOrderInitGenesis(
 		auth.ModuleName, distr.ModuleName, staking.ModuleName, bank.ModuleName, supply.ModuleName,
-		slashing.ModuleName, gov.ModuleName, mint.ModuleName, oracle.ModuleName, crisis.ModuleName,
+		slashing.ModuleName, gov.ModuleName, odinmint.ModuleName, oracle.ModuleName, crisis.ModuleName,
 		genutil.ModuleName, evidence.ModuleName,
 	)
 	app.mm.RegisterInvariants(&app.CrisisKeeper)
