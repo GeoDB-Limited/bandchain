@@ -44,7 +44,7 @@ func QueryNotFound(result interface{}) ([]byte, error) {
 }
 
 type QueryRateResult struct {
-	Rate sdk.Int `json:"rate"`
+	Rate sdk.Dec `json:"rate"`
 	From Denom   `json:"from"`
 	To   Denom   `json:"to"`
 }

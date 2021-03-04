@@ -17,10 +17,8 @@ import (
 )
 
 const (
-	geo        = "geo"
-	odin       = "odin"
-	geoSupply  = 100
-	odinSupply = 10
+	geo  = "geo"
+	odin = "odin"
 )
 
 type testSupplyKeeper struct {
@@ -91,6 +89,44 @@ func (k testDistrKeeper) SetFeePool(ctx sdk.Context, feePool distr.FeePool) {
 }
 
 func TestKeeper_ExchangeDenom(t *testing.T) {
+	const (
+		geoSupply  = 100
+		odinSupply = 10
+	)
+	cdc := codec.New()
+	key := types.NewKVStoreKey("test")
+	k := NewKeeper(
+		cdc,
+		key,
+		params.Subspace{},
+		&testSupplyKeeper{
+			testSupply{
+				total: sdk.NewCoins(sdk.NewInt64Coin(geo, geoSupply), sdk.NewInt64Coin(odin, odinSupply)),
+			},
+		},
+		&testDistrKeeper{
+			feePool: distr.FeePool{
+				CommunityPool: sdk.NewDecCoins(sdk.NewInt64DecCoin(geo, geoSupply), sdk.NewInt64DecCoin(odin, odinSupply)),
+			},
+		},
+	)
+	db := dbm.NewMemDB()
+	cms := store.NewCommitMultiStore(db)
+	cms.MountStoreWithDB(key, types.StoreTypeIAVL, db)
+	cms.LoadLatestVersion()
+
+	addr, _ := types.AccAddressFromBech32("odin12983g7jhxyynse2jmnjy54ukjene837wcncysg")
+	ctx := types.NewContext(cms, abci.Header{}, false, log.NewNopLogger())
+	err := k.ExchangeDenom(ctx, geo, odin, sdk.NewInt64Coin(geo, 10), addr)
+
+	assert.NoError(t, err, "exchange denom failed")
+}
+
+func TestKeeper_ExchangeDenomDec(t *testing.T) {
+	const (
+		geoSupply  = 90
+		odinSupply = 11
+	)
 	cdc := codec.New()
 	key := types.NewKVStoreKey("test")
 	k := NewKeeper(

@@ -26,20 +26,21 @@ func (k Keeper) ExchangeDenom(ctx sdk.Context, from, to types.Denom, amt sdk.Coi
 		return sdkerrors.Wrapf(err, "burning coins: %s", amt.String())
 	}
 
-	err = k.supplyKeeper.MintCoins(ctx, distr.ModuleName, sdk.NewCoins(convertedAmt))
+	toSend, _ := convertedAmt.TruncateDecimal()
+	err = k.supplyKeeper.MintCoins(ctx, distr.ModuleName, sdk.NewCoins(toSend))
 	if err != nil {
 		return sdkerrors.Wrapf(err, "minting coins: %s", convertedAmt.String())
 	}
 
 	feePool := k.distrKeeper.GetFeePool(ctx)
-	diff, hasNeg := feePool.CommunityPool.SafeSub(sdk.NewDecCoinsFromCoins(sdk.NewCoins(convertedAmt)...))
+	diff, hasNeg := feePool.CommunityPool.SafeSub(sdk.NewDecCoins(convertedAmt))
 	if hasNeg {
 		return sdkerrors.Wrap(sdkerrors.ErrInsufficientFunds, "community pool does not have enough funds")
 	}
 
 	feePool.CommunityPool = diff
 
-	err = k.supplyKeeper.SendCoinsFromModuleToAccount(ctx, distr.ModuleName, requester, sdk.NewCoins(convertedAmt))
+	err = k.supplyKeeper.SendCoinsFromModuleToAccount(ctx, distr.ModuleName, requester, sdk.NewCoins(toSend))
 	if err != nil {
 		return sdkerrors.Wrapf(err, "sending coins from module: %s, to account: %s", distr.ModuleName, requester.String())
 	}
@@ -49,18 +50,17 @@ func (k Keeper) ExchangeDenom(ctx sdk.Context, from, to types.Denom, amt sdk.Coi
 	return nil
 }
 
-func (k Keeper) GetRate(ctx sdk.Context, from, to types.Denom) sdk.Int {
+func (k Keeper) GetRate(ctx sdk.Context, from, to types.Denom) sdk.Dec {
 	totalSupply := k.supplyKeeper.GetSupply(ctx).GetTotal()
 	fromSupply := totalSupply.AmountOf(from.String())
 	toSupply := totalSupply.AmountOf(to.String())
-
-	return sdk.NewIntFromBigInt(fromSupply.ToDec().Div(fromSupply.ToDec().BigInt(), toSupply.ToDec().BigInt()))
+	return fromSupply.ToDec().QuoRoundUp(toSupply.ToDec())
 }
 
 // todo work on rate variations
 // returns the converted amount according to current rate
-func (k Keeper) convertToRate(ctx sdk.Context, from, to types.Denom, amt sdk.Coin) (sdk.Coin, error) {
+func (k Keeper) convertToRate(ctx sdk.Context, from, to types.Denom, amt sdk.Coin) (sdk.DecCoin, error) {
 	rate := k.GetRate(ctx, from, to)
-	convertedAmt := amt.Amount.Quo(rate)
-	return sdk.NewCoin(to.String(), convertedAmt), nil
+	convertedAmt := amt.Amount.ToDec().QuoRoundUp(rate)
+	return sdk.NewDecCoin(to.String(), convertedAmt.TruncateInt()), nil
 }
