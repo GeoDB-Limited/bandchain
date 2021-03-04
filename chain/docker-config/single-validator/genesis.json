@@ -161,6 +161,10 @@
               {
                 "denom": "loki",
                 "amount": "10000000000000"
+              },
+              {
+                "denom": "geo",
+                "amount": "100"
               }
             ],
             "public_key": null,

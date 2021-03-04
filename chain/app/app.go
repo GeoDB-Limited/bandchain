@@ -1,6 +1,7 @@
 package app
 
 import (
+	"github.com/GeoDB-Limited/odincore/chain/x/coinswap"
 	"io"
 	"os"
 	"path/filepath"
@@ -66,11 +67,12 @@ var (
 		upgrade.AppModuleBasic{},
 		evidence.AppModuleBasic{},
 		oracle.AppModuleBasic{},
+		coinswap.AppModuleBasic{},
 	)
 	// module account permissions
 	maccPerms = map[string][]string{
 		auth.FeeCollectorName:     nil,
-		distr.ModuleName:          nil,
+		distr.ModuleName:          {supply.Minter, supply.Burner},
 		odinmint.ModuleName:       {supply.Minter},
 		staking.BondedPoolName:    {supply.Burner, supply.Staking},
 		staking.NotBondedPoolName: {supply.Burner, supply.Staking},
@@ -104,6 +106,7 @@ type BandApp struct {
 	UpgradeKeeper  upgrade.Keeper
 	EvidenceKeeper evidence.Keeper
 	OracleKeeper   oracle.Keeper
+	CoinswapKeeper coinswap.Keeper
 	// Deliver context, set during InitGenesis/BeginBlock and cleared during Commit. It allows
 	// anyone with access to BandApp to read/mutate consensus state anytime. USE WITH CARE!
 	DeliverContext sdk.Context
@@ -147,7 +150,7 @@ func NewBandApp(
 	keys := sdk.NewKVStoreKeys(
 		bam.MainStoreKey, auth.StoreKey, supply.StoreKey, staking.StoreKey, odinmint.StoreKey,
 		distr.StoreKey, slashing.StoreKey, gov.StoreKey, params.StoreKey, upgrade.StoreKey,
-		evidence.StoreKey, oracle.StoreKey,
+		evidence.StoreKey, oracle.StoreKey, coinswap.StoreKey,
 	)
 	tKeys := sdk.NewTransientStoreKeys(params.TStoreKey)
 	app := &BandApp{
@@ -169,6 +172,7 @@ func NewBandApp(
 	govSubspace := app.ParamsKeeper.Subspace(gov.DefaultParamspace).WithKeyTable(gov.ParamKeyTable())
 	crisisSubspace := app.ParamsKeeper.Subspace(crisis.DefaultParamspace)
 	oracleSubspace := app.ParamsKeeper.Subspace(oracle.DefaultParamspace)
+	coinswapSubspace := app.ParamsKeeper.Subspace(coinswap.DefaultParamspace)
 	// Add module keepers.
 	app.AccountKeeper = auth.NewAccountKeeper(cdc, keys[auth.StoreKey], authSubspace, auth.ProtoBaseAccount)
 	app.BankKeeper = bank.NewBaseKeeper(app.AccountKeeper, bankSubspace, app.BlacklistedAccAddrs())
@@ -185,6 +189,7 @@ func NewBandApp(
 	app.SlashingKeeper = slashing.NewKeeper(cdc, keys[slashing.StoreKey], &stakingKeeper, slashingSubspace)
 	app.UpgradeKeeper = upgrade.NewKeeper(skipUpgradeHeights, keys[upgrade.StoreKey], cdc)
 	app.OracleKeeper = oracle.NewKeeper(cdc, keys[oracle.StoreKey], filepath.Join(viper.GetString(cli.HomeFlag), "files"), auth.FeeCollectorName, oracleSubspace, app.SupplyKeeper, &stakingKeeper, app.DistrKeeper)
+	app.CoinswapKeeper = coinswap.NewKeeper(cdc, keys[coinswap.StoreKey], coinswapSubspace, wrappedSupplyKeeper, app.DistrKeeper)
 	// Register the proposal types.
 	govRouter := gov.NewRouter()
 	govRouter.
@@ -215,6 +220,7 @@ func NewBandApp(
 		upgrade.NewAppModule(app.UpgradeKeeper),
 		evidence.NewAppModule(app.EvidenceKeeper),
 		oracle.NewAppModule(app.OracleKeeper),
+		coinswap.NewAppModule(app.CoinswapKeeper),
 	)
 	// NOTE: Oracle module must occur before distr as it takes some fee to distribute to active oracle validators.
 	// NOTE: During begin block slashing happens after distr.BeginBlocker so that there is nothing left
@@ -231,7 +237,7 @@ func NewBandApp(
 	app.mm.SetOrderInitGenesis(
 		auth.ModuleName, distr.ModuleName, staking.ModuleName, bank.ModuleName, supply.ModuleName,
 		slashing.ModuleName, gov.ModuleName, odinmint.ModuleName, oracle.ModuleName, crisis.ModuleName,
-		genutil.ModuleName, evidence.ModuleName,
+		genutil.ModuleName, evidence.ModuleName, coinswap.ModuleName,
 	)
 	app.mm.RegisterInvariants(&app.CrisisKeeper)
 	app.mm.RegisterRoutes(app.Router(), app.QueryRouter())
