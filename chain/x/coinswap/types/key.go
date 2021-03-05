@@ -7,3 +7,7 @@ const (
 	StoreKey          = ModuleName
 	DefaultParamspace = ModuleName
 )
+
+var (
+	InitialRateStoreKey = []byte("InitialRateStore") // key initial rate store
+)

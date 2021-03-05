@@ -75,7 +75,7 @@ func (am AppModule) ExportGenesis(ctx sdk.Context) json.RawMessage {
 }
 
 func (am AppModule) RegisterInvariants(registry sdk.InvariantRegistry) {
-	// todo maybe need one for uniswap
+
 }
 
 func (am AppModule) Route() string {

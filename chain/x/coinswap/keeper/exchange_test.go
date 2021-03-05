@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"github.com/GeoDB-Limited/odincore/chain/x/oracle"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/store"
 	"github.com/cosmos/cosmos-sdk/types"
@@ -88,6 +89,18 @@ func (k testDistrKeeper) SetFeePool(ctx sdk.Context, feePool distr.FeePool) {
 	k.feePool = feePool
 }
 
+type testOracleKeeper struct {
+	oraclePool oracle.OraclePool
+}
+
+func (k testOracleKeeper) GetOraclePool(ctx sdk.Context) (oraclePool oracle.OraclePool) {
+	return k.oraclePool
+}
+
+func (k testOracleKeeper) SetOraclePool(ctx sdk.Context, oraclePool oracle.OraclePool) {
+	k.oraclePool = oraclePool
+}
+
 func TestKeeper_ExchangeDenom(t *testing.T) {
 	const (
 		geoSupply  = 100
@@ -107,6 +120,11 @@ func TestKeeper_ExchangeDenom(t *testing.T) {
 		&testDistrKeeper{
 			feePool: distr.FeePool{
 				CommunityPool: sdk.NewDecCoins(sdk.NewInt64DecCoin(geo, geoSupply), sdk.NewInt64DecCoin(odin, odinSupply)),
+			},
+		},
+		&testOracleKeeper{
+			oraclePool: oracle.OraclePool{
+				DataProvidersPool: sdk.NewDecCoins(sdk.NewInt64DecCoin(geo, geoSupply), sdk.NewInt64DecCoin(odin, odinSupply)),
 			},
 		},
 	)
@@ -143,6 +161,11 @@ func TestKeeper_ExchangeDenomDec(t *testing.T) {
 				CommunityPool: sdk.NewDecCoins(sdk.NewInt64DecCoin(geo, geoSupply), sdk.NewInt64DecCoin(odin, odinSupply)),
 			},
 		},
+		&testOracleKeeper{
+			oraclePool: oracle.OraclePool{
+				DataProvidersPool: sdk.NewDecCoins(sdk.NewInt64DecCoin(geo, geoSupply), sdk.NewInt64DecCoin(odin, odinSupply)),
+			},
+		},
 	)
 	db := dbm.NewMemDB()
 	cms := store.NewCommitMultiStore(db)
@@ -154,4 +177,43 @@ func TestKeeper_ExchangeDenomDec(t *testing.T) {
 	err := k.ExchangeDenom(ctx, geo, odin, sdk.NewInt64Coin(geo, 10), addr)
 
 	assert.NoError(t, err, "exchange denom failed")
+}
+
+func TestKeeper_ExchangeDenomHighRate(t *testing.T) {
+	const (
+		geoSupply  = 101
+		odinSupply = 10
+	)
+	cdc := codec.New()
+	key := types.NewKVStoreKey("test")
+	k := NewKeeper(
+		cdc,
+		key,
+		params.Subspace{},
+		&testSupplyKeeper{
+			testSupply{
+				total: sdk.NewCoins(sdk.NewInt64Coin(geo, geoSupply), sdk.NewInt64Coin(odin, odinSupply)),
+			},
+		},
+		&testDistrKeeper{
+			feePool: distr.FeePool{
+				CommunityPool: sdk.NewDecCoins(sdk.NewInt64DecCoin(geo, geoSupply), sdk.NewInt64DecCoin(odin, odinSupply)),
+			},
+		},
+		&testOracleKeeper{
+			oraclePool: oracle.OraclePool{
+				DataProvidersPool: sdk.NewDecCoins(sdk.NewInt64DecCoin(geo, geoSupply), sdk.NewInt64DecCoin(odin, odinSupply)),
+			},
+		},
+	)
+	db := dbm.NewMemDB()
+	cms := store.NewCommitMultiStore(db)
+	cms.MountStoreWithDB(key, types.StoreTypeIAVL, db)
+	cms.LoadLatestVersion()
+
+	addr, _ := types.AccAddressFromBech32("odin12983g7jhxyynse2jmnjy54ukjene837wcncysg")
+	ctx := types.NewContext(cms, abci.Header{}, false, log.NewNopLogger())
+	err := k.ExchangeDenom(ctx, geo, odin, sdk.NewInt64Coin(geo, 10), addr)
+
+	assert.Error(t, err, "exchange denom failed")
 }

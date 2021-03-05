@@ -56,13 +56,14 @@ func GetQueryCmdParams(route string, cdc *codec.Codec) *cobra.Command {
 	}
 }
 
+// todo maybe query with data???
 func GetQueryCmdRate(route string, cdc *codec.Codec) *cobra.Command {
 	return &cobra.Command{
 		Use:  "rate [from-denom] [to-denom]",
-		Args: cobra.ExactArgs(2),
+		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
-			bz, _, err := cliCtx.Query(fmt.Sprintf("custom/%s/%s/%s/%s", route, types.QueryRate, args[0], args[1]))
+			bz, _, err := cliCtx.Query(fmt.Sprintf("custom/%s/%s", route, types.QueryRate))
 			if err != nil {
 				return err
 			}

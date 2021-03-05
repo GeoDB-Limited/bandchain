@@ -1,6 +1,7 @@
 package types
 
 import (
+	"github.com/GeoDB-Limited/odincore/chain/x/oracle"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	distr "github.com/cosmos/cosmos-sdk/x/distribution"
 	"github.com/cosmos/cosmos-sdk/x/supply/exported"
@@ -20,4 +21,9 @@ type SupplyKeeper interface {
 type DistrKeeper interface {
 	GetFeePool(ctx sdk.Context) (feePool distr.FeePool)
 	SetFeePool(ctx sdk.Context, feePool distr.FeePool)
+}
+
+type OracleKeeper interface {
+	GetOraclePool(ctx sdk.Context) (oraclePool oracle.OraclePool)
+	SetOraclePool(ctx sdk.Context, oraclePool oracle.OraclePool)
 }

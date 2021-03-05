@@ -10,7 +10,8 @@ import (
 
 // GenesisState is the oracle state that must be provided at genesis.
 type GenesisState struct {
-	Params types.Params `json:"params" yaml:"params"`
+	InitialRate sdk.Dec      `json:"initial_rate" yaml:"initial_rate"`
+	Params      types.Params `json:"params" yaml:"params"`
 }
 
 // DefaultGenesisState returns the default oracle genesis state.
@@ -22,7 +23,8 @@ func DefaultGenesisState() GenesisState {
 
 // InitGenesis performs genesis initialization for the oracle module.
 func InitGenesis(ctx sdk.Context, k Keeper, data GenesisState) []abci.ValidatorUpdate {
-	// todo set params
+	k.SetParams(ctx, data.Params)
+	k.SetInitialRate(ctx, data.InitialRate)
 	return []abci.ValidatorUpdate{}
 }
 

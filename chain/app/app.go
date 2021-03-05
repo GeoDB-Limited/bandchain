@@ -71,8 +71,9 @@ var (
 	)
 	// module account permissions
 	maccPerms = map[string][]string{
+		oracle.ModuleName:         nil,
 		auth.FeeCollectorName:     nil,
-		distr.ModuleName:          {supply.Minter, supply.Burner},
+		distr.ModuleName:          nil,
 		odinmint.ModuleName:       {supply.Minter},
 		staking.BondedPoolName:    {supply.Burner, supply.Staking},
 		staking.NotBondedPoolName: {supply.Burner, supply.Staking},
@@ -189,7 +190,7 @@ func NewBandApp(
 	app.SlashingKeeper = slashing.NewKeeper(cdc, keys[slashing.StoreKey], &stakingKeeper, slashingSubspace)
 	app.UpgradeKeeper = upgrade.NewKeeper(skipUpgradeHeights, keys[upgrade.StoreKey], cdc)
 	app.OracleKeeper = oracle.NewKeeper(cdc, keys[oracle.StoreKey], filepath.Join(viper.GetString(cli.HomeFlag), "files"), auth.FeeCollectorName, oracleSubspace, app.SupplyKeeper, &stakingKeeper, app.DistrKeeper)
-	app.CoinswapKeeper = coinswap.NewKeeper(cdc, keys[coinswap.StoreKey], coinswapSubspace, wrappedSupplyKeeper, app.DistrKeeper)
+	app.CoinswapKeeper = coinswap.NewKeeper(cdc, keys[coinswap.StoreKey], coinswapSubspace, wrappedSupplyKeeper, app.DistrKeeper, app.OracleKeeper)
 	// Register the proposal types.
 	govRouter := gov.NewRouter()
 	govRouter.
@@ -219,7 +220,7 @@ func NewBandApp(
 		staking.NewAppModule(app.StakingKeeper, app.AccountKeeper, app.SupplyKeeper),
 		upgrade.NewAppModule(app.UpgradeKeeper),
 		evidence.NewAppModule(app.EvidenceKeeper),
-		oracle.NewAppModule(app.OracleKeeper),
+		oracle.NewAppModule(app.OracleKeeper, wrappedSupplyKeeper),
 		coinswap.NewAppModule(app.CoinswapKeeper),
 	)
 	// NOTE: Oracle module must occur before distr as it takes some fee to distribute to active oracle validators.
@@ -235,8 +236,8 @@ func NewBandApp(
 	// NOTE: The genutils module must occur after staking so that pools are
 	// properly initialized with tokens from genesis accounts.
 	app.mm.SetOrderInitGenesis(
-		auth.ModuleName, distr.ModuleName, staking.ModuleName, bank.ModuleName, supply.ModuleName,
-		slashing.ModuleName, gov.ModuleName, odinmint.ModuleName, oracle.ModuleName, crisis.ModuleName,
+		auth.ModuleName, distr.ModuleName, staking.ModuleName, bank.ModuleName, oracle.ModuleName, supply.ModuleName,
+		slashing.ModuleName, gov.ModuleName, odinmint.ModuleName, crisis.ModuleName,
 		genutil.ModuleName, evidence.ModuleName, coinswap.ModuleName,
 	)
 	app.mm.RegisterInvariants(&app.CrisisKeeper)

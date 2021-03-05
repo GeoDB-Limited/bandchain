@@ -28,8 +28,10 @@ var (
 	PendingResolveListStoreKey = append(GlobalStoreKeyPrefix, []byte("PendingList")...)
 	// DataSourceCountStoreKey is the key that keeps the total data source count.
 	DataSourceCountStoreKey = append(GlobalStoreKeyPrefix, []byte("DataSourceCount")...)
-	// OracleScriptCountStoreKey is the key that keeps the total oracle sciprt count.
+	// OracleScriptCountStoreKey is the key that keeps the total oracle scripts count.
 	OracleScriptCountStoreKey = append(GlobalStoreKeyPrefix, []byte("OracleScriptCount")...)
+	// OraclePoolStoreKey is the key that keeps the oracle pool
+	OraclePoolStoreKey = append(GlobalStoreKeyPrefix, []byte("OraclePool")...) // key for global oracle pool state
 
 	// RequestStoreKeyPrefix is the prefix for request store.
 	RequestStoreKeyPrefix = []byte{0x01}
