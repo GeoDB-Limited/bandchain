@@ -56,7 +56,6 @@ func GetQueryCmdParams(route string, cdc *codec.Codec) *cobra.Command {
 	}
 }
 
-// todo maybe query with data???
 func GetQueryCmdRate(route string, cdc *codec.Codec) *cobra.Command {
 	return &cobra.Command{
 		Use:  "rate [from-denom] [to-denom]",

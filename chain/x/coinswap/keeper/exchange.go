@@ -60,7 +60,6 @@ func (k Keeper) GetRate(ctx sdk.Context, from, to types.Denom) sdk.Dec {
 	return fromSupply.ToDec().QuoRoundUp(toSupply.ToDec())
 }
 
-// todo work on rate variations
 // returns the converted amount according to current rate
 func (k Keeper) convertToRate(ctx sdk.Context, from, to types.Denom, amt sdk.Coin) (sdk.DecCoin, error) {
 	rate := k.GetRate(ctx, from, to)
