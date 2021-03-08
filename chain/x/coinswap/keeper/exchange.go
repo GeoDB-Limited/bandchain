@@ -53,16 +53,16 @@ func (k Keeper) ExchangeDenom(ctx sdk.Context, from, to types.Denom, amt sdk.Coi
 	return nil
 }
 
-func (k Keeper) GetRate(ctx sdk.Context, from, to types.Denom) sdk.Dec {
-	totalSupply := k.supplyKeeper.GetSupply(ctx).GetTotal()
-	fromSupply := totalSupply.AmountOf(from.String())
-	toSupply := totalSupply.AmountOf(to.String())
-	return fromSupply.ToDec().QuoRoundUp(toSupply.ToDec())
+func (k Keeper) GetRate(ctx sdk.Context) sdk.Dec {
+	params := types.Params{}
+	k.paramSpace.GetParamSet(ctx, &params)
+	initialRate := k.GetInitialRate(ctx)
+	return initialRate.Mul(params.RateMultiplier)
 }
 
 // returns the converted amount according to current rate
 func (k Keeper) convertToRate(ctx sdk.Context, from, to types.Denom, amt sdk.Coin) (sdk.DecCoin, error) {
-	rate := k.GetRate(ctx, from, to)
+	rate := k.GetRate(ctx)
 	if rate.GT(amt.Amount.ToDec()) {
 		return sdk.DecCoin{}, sdkerrors.Wrapf(sdkerrors.ErrInsufficientFunds, "current rate: %s is higher then amount provided: %s", rate.String(), amt.String())
 	}

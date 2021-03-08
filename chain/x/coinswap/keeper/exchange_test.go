@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	swaptypes "github.com/GeoDB-Limited/odincore/chain/x/coinswap/types"
 	"github.com/GeoDB-Limited/odincore/chain/x/oracle"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/store"
@@ -18,8 +19,15 @@ import (
 )
 
 const (
-	geo  = "geo"
-	odin = "odin"
+	geo         = "geo"
+	odin        = "odin"
+	initialRate = 10
+)
+
+var (
+	cdc  = codec.New()
+	key  = types.NewKVStoreKey("params")
+	tkey = sdk.NewTransientStoreKey("transient_params")
 )
 
 type testSupplyKeeper struct {
@@ -101,17 +109,27 @@ func (k testOracleKeeper) SetOraclePool(ctx sdk.Context, oraclePool oracle.Oracl
 	k.oraclePool = oraclePool
 }
 
+func getDefaultCtx() sdk.Context {
+	db := dbm.NewMemDB()
+	cms := store.NewCommitMultiStore(db)
+	cms.MountStoreWithDB(key, types.StoreTypeIAVL, db)
+	cms.MountStoreWithDB(tkey, sdk.StoreTypeTransient, db)
+	cms.LoadLatestVersion()
+	return types.NewContext(cms, abci.Header{}, false, log.NewNopLogger())
+}
+
 func TestKeeper_ExchangeDenom(t *testing.T) {
 	const (
 		geoSupply  = 100
 		odinSupply = 10
 	)
-	cdc := codec.New()
-	key := types.NewKVStoreKey("test")
+
+	ctx := getDefaultCtx()
+
 	k := NewKeeper(
 		cdc,
 		key,
-		params.Subspace{},
+		params.NewSubspace(cdc, key, tkey, swaptypes.DefaultParamspace),
 		&testSupplyKeeper{
 			testSupply{
 				total: sdk.NewCoins(sdk.NewInt64Coin(geo, geoSupply), sdk.NewInt64Coin(odin, odinSupply)),
@@ -128,13 +146,11 @@ func TestKeeper_ExchangeDenom(t *testing.T) {
 			},
 		},
 	)
-	db := dbm.NewMemDB()
-	cms := store.NewCommitMultiStore(db)
-	cms.MountStoreWithDB(key, types.StoreTypeIAVL, db)
-	cms.LoadLatestVersion()
+
+	k.SetInitialRate(ctx, sdk.NewDec(initialRate))
+	k.SetParams(ctx, swaptypes.Params{RateMultiplier: sdk.NewDec(1)})
 
 	addr, _ := types.AccAddressFromBech32("odin12983g7jhxyynse2jmnjy54ukjene837wcncysg")
-	ctx := types.NewContext(cms, abci.Header{}, false, log.NewNopLogger())
 	err := k.ExchangeDenom(ctx, geo, odin, sdk.NewInt64Coin(geo, 10), addr)
 
 	assert.NoError(t, err, "exchange denom failed")
@@ -145,12 +161,13 @@ func TestKeeper_ExchangeDenomDec(t *testing.T) {
 		geoSupply  = 90
 		odinSupply = 11
 	)
-	cdc := codec.New()
-	key := types.NewKVStoreKey("test")
+
+	ctx := getDefaultCtx()
+
 	k := NewKeeper(
 		cdc,
 		key,
-		params.Subspace{},
+		params.NewSubspace(cdc, key, tkey, swaptypes.DefaultParamspace),
 		&testSupplyKeeper{
 			testSupply{
 				total: sdk.NewCoins(sdk.NewInt64Coin(geo, geoSupply), sdk.NewInt64Coin(odin, odinSupply)),
@@ -167,13 +184,11 @@ func TestKeeper_ExchangeDenomDec(t *testing.T) {
 			},
 		},
 	)
-	db := dbm.NewMemDB()
-	cms := store.NewCommitMultiStore(db)
-	cms.MountStoreWithDB(key, types.StoreTypeIAVL, db)
-	cms.LoadLatestVersion()
+
+	k.SetInitialRate(ctx, sdk.NewDec(initialRate))
+	k.SetParams(ctx, swaptypes.Params{RateMultiplier: sdk.NewDec(1)})
 
 	addr, _ := types.AccAddressFromBech32("odin12983g7jhxyynse2jmnjy54ukjene837wcncysg")
-	ctx := types.NewContext(cms, abci.Header{}, false, log.NewNopLogger())
 	err := k.ExchangeDenom(ctx, geo, odin, sdk.NewInt64Coin(geo, 10), addr)
 
 	assert.NoError(t, err, "exchange denom failed")
@@ -184,12 +199,13 @@ func TestKeeper_ExchangeDenomHighRate(t *testing.T) {
 		geoSupply  = 101
 		odinSupply = 10
 	)
-	cdc := codec.New()
-	key := types.NewKVStoreKey("test")
+
+	ctx := getDefaultCtx()
+
 	k := NewKeeper(
 		cdc,
 		key,
-		params.Subspace{},
+		params.NewSubspace(cdc, key, tkey, swaptypes.DefaultParamspace),
 		&testSupplyKeeper{
 			testSupply{
 				total: sdk.NewCoins(sdk.NewInt64Coin(geo, geoSupply), sdk.NewInt64Coin(odin, odinSupply)),
@@ -206,13 +222,11 @@ func TestKeeper_ExchangeDenomHighRate(t *testing.T) {
 			},
 		},
 	)
-	db := dbm.NewMemDB()
-	cms := store.NewCommitMultiStore(db)
-	cms.MountStoreWithDB(key, types.StoreTypeIAVL, db)
-	cms.LoadLatestVersion()
+
+	k.SetInitialRate(ctx, sdk.NewDec(initialRate))
+	k.SetParams(ctx, swaptypes.Params{RateMultiplier: sdk.MustNewDecFromStr("1.100000000000000000")})
 
 	addr, _ := types.AccAddressFromBech32("odin12983g7jhxyynse2jmnjy54ukjene837wcncysg")
-	ctx := types.NewContext(cms, abci.Header{}, false, log.NewNopLogger())
 	err := k.ExchangeDenom(ctx, geo, odin, sdk.NewInt64Coin(geo, 10), addr)
 
 	assert.Error(t, err, "exchange denom failed")

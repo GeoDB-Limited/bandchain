@@ -9,10 +9,10 @@ import (
 const RouterKey = ModuleName
 
 type MsgExchange struct {
-	From      Denom
-	To        Denom
-	Amount    sdk.Coin       // amount of coins to change
-	Requester sdk.AccAddress // address output coin is being sent to
+	From      Denom          `json:"from"`
+	To        Denom          `json:"to"`
+	Amount    sdk.Coin       `json:"amount"`    // amount of coins to change
+	Requester sdk.AccAddress `json:"requester"` // address output coin is being sent to
 }
 
 // Route returns the route of MsgExchange - "coinswap" (sdk.Msg interface).
