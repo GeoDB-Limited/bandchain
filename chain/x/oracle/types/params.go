@@ -23,18 +23,23 @@ const (
 	DefaultInactivePenaltyDuration = uint64(10 * time.Minute)
 )
 
+var (
+	DefaultDataProviderRewardPerByte = NewDecProto()
+)
+
 // nolint
 var (
 	// Each value below is the key to store the respective oracle module parameter. See comments
 	// in types.proto for explanation for each parameter.
-	KeyMaxRawRequestCount      = []byte("MaxRawRequestCount")
-	KeyMaxAskCount             = []byte("MaxAskCount")
-	KeyExpirationBlockCount    = []byte("ExpirationBlockCount")
-	KeyBaseRequestGas          = []byte("BaseRequestGas")
-	KeyPerValidatorRequestGas  = []byte("PerValidatorRequestGas")
-	KeySamplingTryCount        = []byte("SamplingTryCount")
-	KeyOracleRewardPercentage  = []byte("OracleRewardPercentage")
-	KeyInactivePenaltyDuration = []byte("InactivePenaltyDuration")
+	KeyMaxRawRequestCount        = []byte("MaxRawRequestCount")
+	KeyMaxAskCount               = []byte("MaxAskCount")
+	KeyExpirationBlockCount      = []byte("ExpirationBlockCount")
+	KeyBaseRequestGas            = []byte("BaseRequestGas")
+	KeyPerValidatorRequestGas    = []byte("PerValidatorRequestGas")
+	KeySamplingTryCount          = []byte("SamplingTryCount")
+	KeyOracleRewardPercentage    = []byte("OracleRewardPercentage")
+	KeyInactivePenaltyDuration   = []byte("InactivePenaltyDuration")
+	KeyDataProviderRewardPerByte = []byte("DataProviderRewardPerByte")
 )
 
 // String implements the stringer interface for Params.
@@ -71,6 +76,7 @@ func (p *Params) ParamSetPairs() params.ParamSetPairs {
 		params.NewParamSetPair(KeySamplingTryCount, &p.SamplingTryCount, validateUint64("sampling try count", true)),
 		params.NewParamSetPair(KeyOracleRewardPercentage, &p.OracleRewardPercentage, validateUint64("oracle reward percentage", false)),
 		params.NewParamSetPair(KeyInactivePenaltyDuration, &p.InactivePenaltyDuration, validateUint64("inactive penalty duration", false)),
+		params.NewParamSetPair(KeyDataProviderRewardPerByte, &p.DataProviderRewardPerByte, validateDataProviderRewardPerByte),
 	}
 }
 
@@ -85,6 +91,7 @@ func DefaultParams() Params {
 		DefaultSamplingTryCount,
 		DefaultOracleRewardPercentage,
 		DefaultInactivePenaltyDuration,
+		DefaultDataProviderRewardPerByte,
 	)
 }
 
@@ -99,4 +106,16 @@ func validateUint64(name string, positiveOnly bool) func(interface{}) error {
 		}
 		return nil
 	}
+}
+
+func validateDataProviderRewardPerByte(i interface{}) error {
+	v, ok := i.(DecProto)
+	if !ok {
+		return fmt.Errorf("invalid parameter type: %T", i)
+	}
+
+	if v.IsNegative() {
+		return fmt.Errorf("data provider reward must be positive: %v", v)
+	}
+	return nil
 }

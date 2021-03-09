@@ -58,6 +58,7 @@ func ParamKeyTable() params.KeyTable {
 	return params.NewKeyTable().RegisterParamSet(&types.Params{})
 }
 
+// todo may be dangerous to keep, as far as we have not only uint params
 // GetParam returns the parameter as specified by key as an uint64.
 func (k Keeper) GetParam(ctx sdk.Context, key []byte) (res uint64) {
 	k.paramSpace.Get(ctx, key, &res)

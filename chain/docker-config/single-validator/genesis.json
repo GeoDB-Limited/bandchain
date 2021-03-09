@@ -50,6 +50,7 @@
       "supply": []
     },
     "oracle": {
+      "data_provider_reward_denom": "geo",
       "params": {
         "max_raw_request_count": "12",
         "max_ask_count": "16",

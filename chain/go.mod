@@ -10,7 +10,7 @@ require (
 	github.com/gin-gonic/gin v1.6.3
 	github.com/go-gorp/gorp v2.2.0+incompatible
 	github.com/go-sql-driver/mysql v1.4.0
-	github.com/gogo/protobuf v1.3.1
+	github.com/gogo/protobuf v1.3.2
 	github.com/golang/protobuf v1.4.2
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510
 	github.com/gorilla/mux v1.7.4
@@ -23,6 +23,7 @@ require (
 	github.com/peterbourgon/diskv v2.0.1+incompatible
 	github.com/poy/onpar v1.0.1 // indirect
 	github.com/rakyll/statik v0.1.7 // indirect
+	github.com/regen-network/cosmos-proto v0.3.1 // indirect
 	github.com/segmentio/kafka-go v0.3.7
 	github.com/spf13/cobra v1.0.0
 	github.com/spf13/viper v1.7.1

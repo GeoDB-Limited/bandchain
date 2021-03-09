@@ -12,9 +12,10 @@ import (
 
 // GenesisState is the oracle state that must be provided at genesis.
 type GenesisState struct {
-	Params        types.Params         `json:"params" yaml:"params"`
-	DataSources   []types.DataSource   `json:"data_sources"  yaml:"data_sources"`
-	OracleScripts []types.OracleScript `json:"oracle_scripts"  yaml:"oracle_scripts"`
+	DataProviderRewardDenom string               `json:"data_provider_reward_denom" yaml:"data_provider_reward_denom"`
+	Params                  types.Params         `json:"params" yaml:"params"`
+	DataSources             []types.DataSource   `json:"data_sources"  yaml:"data_sources"`
+	OracleScripts           []types.OracleScript `json:"oracle_scripts"  yaml:"oracle_scripts"`
 }
 
 // DefaultGenesisState returns the default oracle genesis state.
@@ -36,6 +37,7 @@ func InitGenesis(ctx sdk.Context, k Keeper, data GenesisState) []abci.ValidatorU
 	k.SetParam(ctx, types.KeySamplingTryCount, data.Params.SamplingTryCount)
 	k.SetParam(ctx, types.KeyOracleRewardPercentage, data.Params.OracleRewardPercentage)
 	k.SetParam(ctx, types.KeyInactivePenaltyDuration, data.Params.InactivePenaltyDuration)
+	k.SetOracleDataProviderRewardDenom(ctx, data.DataProviderRewardDenom)
 	k.SetDataSourceCount(ctx, 0)
 	k.SetOracleScriptCount(ctx, 0)
 	k.SetRequestCount(ctx, 0)

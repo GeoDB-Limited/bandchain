@@ -17,6 +17,7 @@ type AccountKeeper interface {
 type SupplyKeeper interface {
 	GetModuleAccount(ctx sdk.Context, name string) supplyexported.ModuleAccountI
 	SendCoinsFromModuleToModule(ctx sdk.Context, senderModule string, recipientModule string, amt sdk.Coins) error
+	SendCoinsFromModuleToAccount(ctx sdk.Context, senderModule string, recipientAddr sdk.AccAddress, amt sdk.Coins) error
 }
 
 // StakingKeeper defines the expected staking keeper.
