@@ -15,7 +15,9 @@ type AccountKeeper interface {
 
 // SupplyKeeper defines the expected supply Keeper.
 type SupplyKeeper interface {
+	GetModuleAddress(name string) sdk.AccAddress
 	GetModuleAccount(ctx sdk.Context, name string) supplyexported.ModuleAccountI
+	SetModuleAccount(sdk.Context, supplyexported.ModuleAccountI)
 	SendCoinsFromModuleToModule(ctx sdk.Context, senderModule string, recipientModule string, amt sdk.Coins) error
 	SendCoinsFromModuleToAccount(ctx sdk.Context, senderModule string, recipientAddr sdk.AccAddress, amt sdk.Coins) error
 }

@@ -33,4 +33,5 @@ type (
 	MsgRemoveReporter        = types.MsgRemoveReporter
 	OracleRequestPacketData  = types.OracleRequestPacketData
 	OracleResponsePacketData = types.OracleResponsePacketData
+	OraclePool               = types.OraclePool
 )

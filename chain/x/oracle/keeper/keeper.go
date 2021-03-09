@@ -33,6 +33,11 @@ func NewKeeper(
 	paramSpace params.Subspace, supplyKeeper types.SupplyKeeper,
 	stakingKeeper types.StakingKeeper, distrKeeper types.DistrKeeper,
 ) Keeper {
+
+	if addr := supplyKeeper.GetModuleAddress(types.ModuleName); addr == nil {
+		panic("the oracle module account has not been set")
+	}
+
 	if !paramSpace.HasKeyTable() {
 		paramSpace = paramSpace.WithKeyTable(ParamKeyTable())
 	}

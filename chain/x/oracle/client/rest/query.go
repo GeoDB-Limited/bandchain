@@ -271,6 +271,21 @@ func getActiveValidatorsHandler(cliCtx context.CLIContext, route string) http.Ha
 	}
 }
 
+func dataProvidersPoolHandler(cliCtx context.CLIContext, queryRoute string) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
+		if !ok {
+			return
+		}
+		bz, height, err := cliCtx.Query(fmt.Sprintf("custom/%s/%s", queryRoute, types.QueryDataProvidersPool))
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+		clientcmn.PostProcessQueryResponse(w, cliCtx.WithHeight(height), bz)
+	}
+}
+
 type requestDetail struct {
 	ChainID    string           `json:"chain_id"`
 	Validator  sdk.ValAddress   `json:"validator"`

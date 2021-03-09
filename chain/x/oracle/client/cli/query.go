@@ -3,7 +3,9 @@ package cli
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/cosmos/cosmos-sdk/version"
 	"net/http"
+	"strings"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/context"
@@ -36,6 +38,7 @@ func GetQueryCmd(storeKey string, cdc *codec.Codec) *cobra.Command {
 		GetQueryCmdReporters(storeKey, cdc),
 		GetQueryActiveValidators(storeKey, cdc),
 		GetQueryPendingRequests(storeKey, cdc),
+		GetCmdQueryDataProvidersPool(storeKey, cdc),
 	)...)
 	return oracleCmd
 }
@@ -215,6 +218,33 @@ func GetQueryPendingRequests(route string, cdc *codec.Codec) *cobra.Command {
 			}
 
 			return printOutput(cliCtx, cdc, bz, &[]types.RequestID{})
+		},
+	}
+}
+
+// GetCmdQueryDataProvidersPool returns the command for fetching community pool info
+func GetCmdQueryDataProvidersPool(queryRoute string, cdc *codec.Codec) *cobra.Command {
+	return &cobra.Command{
+		Use:   "data-providers-pool",
+		Args:  cobra.NoArgs,
+		Short: "Query the amount of coins in the data providers pool",
+		Long: strings.TrimSpace(
+			fmt.Sprintf(`Query all coins in the data providers pool.
+
+Example:
+$ %s query oracle data-providers-pool
+`,
+				version.ClientName,
+			),
+		),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			cliCtx := context.NewCLIContext().WithCodec(cdc)
+
+			bz, _, err := cliCtx.Query(fmt.Sprintf("custom/%s/%s", queryRoute, types.QueryDataProvidersPool))
+			if err != nil {
+				return err
+			}
+			return printOutput(cliCtx, cdc, bz, &[]sdk.DecCoin{})
 		},
 	}
 }
