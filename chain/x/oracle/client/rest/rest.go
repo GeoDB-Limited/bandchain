@@ -32,4 +32,6 @@ func RegisterRoutes(cliCtx context.CLIContext, r *mux.Router, storeName string) 
 	r.HandleFunc(fmt.Sprintf("/%s/multi_proof", storeName), proof.GetMutiProofHandlerFn(cliCtx, storeName)).Methods("GET")
 	r.HandleFunc(fmt.Sprintf("/%s/active_validators", storeName), getActiveValidatorsHandler(cliCtx, storeName)).Methods("GET")
 	r.HandleFunc(fmt.Sprintf("/%s/verify_request", storeName), verifyRequest(cliCtx, storeName)).Methods("POST")
+	// Get the amount held in the oracle pool
+	r.HandleFunc(fmt.Sprintf("/%s/data_providers_pool", storeName), dataProvidersPoolHandler(cliCtx, storeName)).Methods("GET")
 }

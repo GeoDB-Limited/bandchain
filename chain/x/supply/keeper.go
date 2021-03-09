@@ -87,6 +87,10 @@ func (k WrappedSupplyKeeper) BurnCoins(ctx sdk.Context, moduleName string, amt s
 
 // MintCoins does not create any new coins, just gets them from the community pull
 func (k WrappedSupplyKeeper) MintCoins(ctx sdk.Context, moduleName string, amt sdk.Coins) error {
+	if k.distrKeeper == nil || moduleName == distr.ModuleName {
+		return k.Keeper.MintCoins(ctx, moduleName, amt)
+	}
+
 	vanillaMinting := k.mintKeeper.GetParams(ctx).MintAir
 	if vanillaMinting {
 		return k.Keeper.MintCoins(ctx, moduleName, amt)
@@ -105,9 +109,9 @@ func (k WrappedSupplyKeeper) MintCoins(ctx sdk.Context, moduleName string, amt s
 	if err != nil {
 		err = sdkerrors.Wrap(err, fmt.Sprintf("failed to mint %s from %s module account", amt.String(), moduleName))
 		logger.Error(err.Error())
-	} else {
-		logger.Info(fmt.Sprintf("minted %s from %s module account", amt.String(), moduleName))
+		return err
 	}
+	logger.Info(fmt.Sprintf("minted %s from %s module account", amt.String(), moduleName))
 
 	return nil
 }

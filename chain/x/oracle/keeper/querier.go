@@ -35,6 +35,8 @@ func NewQuerier(keeper Keeper) sdk.Querier {
 			return queryActiveValidators(ctx, keeper)
 		case types.QueryPendingRequests:
 			return queryPendingRequests(ctx, path[1:], keeper)
+		case types.QueryDataProvidersPool:
+			return queryDataProvidersPool(ctx, keeper)
 		default:
 			return nil, sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "unknown oracle query endpoint")
 		}
@@ -219,4 +221,8 @@ func queryPendingRequests(ctx sdk.Context, path []string, k Keeper) ([]byte, err
 	}
 
 	return types.QueryOK(pendingIDs)
+}
+
+func queryDataProvidersPool(ctx sdk.Context, k Keeper) ([]byte, error) {
+	return types.QueryOK(k.GetOraclePool(ctx).DataProvidersPool)
 }

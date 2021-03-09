@@ -61,7 +61,15 @@
         "inactive_penalty_duration": "600000000000"
       },
       "data_sources": [],
-      "oracle_scripts": []
+      "oracle_scripts": [],
+      "oracle_pool": {
+        "data_providers_pool": [
+          {
+            "denom": "loki",
+            "amount": "30000000000000"
+          }
+        ]
+      }
     },
     "staking": {
       "params": {
@@ -161,6 +169,29 @@
               {
                 "denom": "loki",
                 "amount": "10000000000000"
+              },
+              {
+                "denom": "geo",
+                "amount": "1000000"
+              }
+            ],
+            "public_key": null,
+            "account_number": "0",
+            "sequence": "0"
+          }
+        },
+        {
+          "type": "cosmos-sdk/Account",
+          "value": {
+            "address": "odin1pl07tk6hcpp2an3rug75as4dfgd743qp80g63g",
+            "coins": [
+              {
+                "denom": "loki",
+                "amount": "10000000000000"
+              },
+              {
+                "denom": "geo",
+                "amount": "1000000"
               }
             ],
             "public_key": null,
@@ -241,11 +272,11 @@
         "community_pool": [
           {
             "denom": "loki",
-            "amount": "89995000000000"
+            "amount": "59995000000000"
           },
           {
             "denom": "geo",
-            "amount": "1000000000000000"
+            "amount": "999999999000000"
           }
         ]
       },
@@ -257,6 +288,12 @@
       "validator_current_rewards": [],
       "delegator_starting_infos": [],
       "validator_slash_events": []
+    },
+    "coinswap": {
+      "initial_rate": "10.000000000000000000",
+      "params": {
+        "rate_multiplier": "1.000000000000000000"
+      }
     }
   }
 }

@@ -2,6 +2,7 @@ package oracle
 
 import (
 	"encoding/json"
+	"github.com/GeoDB-Limited/odincore/chain/x/oracle/types"
 
 	"github.com/gorilla/mux"
 	"github.com/spf13/cobra"
@@ -58,14 +59,16 @@ func (AppModuleBasic) GetTxCmd(cdc *codec.Codec) *cobra.Command {
 // AppModule represents the AppModule for this module.
 type AppModule struct {
 	AppModuleBasic
-	keeper Keeper
+	keeper       Keeper
+	supplyKeeper types.SupplyKeeper
 }
 
 // NewAppModule creates a new AppModule object.
-func NewAppModule(k Keeper) AppModule {
+func NewAppModule(k Keeper, sk types.SupplyKeeper) AppModule {
 	return AppModule{
 		AppModuleBasic: AppModuleBasic{},
 		keeper:         k,
+		supplyKeeper:   sk,
 	}
 }
 
@@ -99,7 +102,7 @@ func (am AppModule) EndBlock(ctx sdk.Context, _ abci.RequestEndBlock) []abci.Val
 func (am AppModule) InitGenesis(ctx sdk.Context, data json.RawMessage) []abci.ValidatorUpdate {
 	var genesisState GenesisState
 	ModuleCdc.MustUnmarshalJSON(data, &genesisState)
-	return InitGenesis(ctx, am.keeper, genesisState)
+	return InitGenesis(ctx, am.keeper, am.supplyKeeper, genesisState)
 }
 
 // ExportGenesis returns the current state as genesis raw bytes.
