@@ -3,6 +3,7 @@ package oracle
 import (
 	"encoding/json"
 	"fmt"
+	commontypes "github.com/GeoDB-Limited/odincore/chain/x/common/types"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -11,9 +12,13 @@ import (
 	"github.com/GeoDB-Limited/odincore/chain/x/oracle/types"
 )
 
+const (
+	DefaultDataProviderRewardDenom = "geo"
+)
+
 // GenesisState is the oracle state that must be provided at genesis.
 type GenesisState struct {
-	DataProviderRewardDenom string               `json:"data_provider_reward_denom" yaml:"data_provider_reward_denom"`
+	DataProviderRewardDenom commontypes.Denom    `json:"data_provider_reward_denom" yaml:"data_provider_reward_denom"`
 	Params                  types.Params         `json:"params" yaml:"params"`
 	DataSources             []types.DataSource   `json:"data_sources"  yaml:"data_sources"`
 	OracleScripts           []types.OracleScript `json:"oracle_scripts"  yaml:"oracle_scripts"`
@@ -23,10 +28,11 @@ type GenesisState struct {
 // DefaultGenesisState returns the default oracle genesis state.
 func DefaultGenesisState() GenesisState {
 	return GenesisState{
-		Params:        types.DefaultParams(),
-		DataSources:   []types.DataSource{},
-		OracleScripts: []types.OracleScript{},
-		OraclePool:    types.InitialOraclePool(),
+		DataProviderRewardDenom: DefaultDataProviderRewardDenom,
+		Params:                  types.DefaultParams(),
+		DataSources:             []types.DataSource{},
+		OracleScripts:           []types.OracleScript{},
+		OraclePool:              types.InitialOraclePool(),
 	}
 }
 

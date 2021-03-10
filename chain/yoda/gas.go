@@ -85,13 +85,13 @@ func estimateReportHandleCost(msg sdk.Msg, f FeeEstimationData) uint64 {
 	countingPerReportCost := 30 + readingCostPerByte*uint64(len(cdc.MustMarshalBinaryBare(msg)))
 
 	// reach min count and have to update pending list
-	costWhenReacnMinCount := countingPerReportCost*uint64(f.minCount+1) + addingPendingCost
+	costWhenReachMinCount := countingPerReportCost*uint64(f.minCount+1) + addingPendingCost
 
 	// reach ask count but don't have to update pending list
 	costWhenReachAskCount := countingPerReportCost * uint64(f.askCount+1)
 
-	if costWhenReacnMinCount > costWhenReachAskCount {
-		cost += costWhenReacnMinCount
+	if costWhenReachMinCount > costWhenReachAskCount {
+		cost += costWhenReachMinCount
 	} else {
 		cost += costWhenReachAskCount
 	}

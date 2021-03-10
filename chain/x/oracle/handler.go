@@ -160,6 +160,7 @@ func handleMsgReportData(ctx sdk.Context, k Keeper, m MsgReportData) (*sdk.Resul
 	}
 
 	req := k.MustGetRequest(ctx, m.RequestID)
+	params := k.GetParams(ctx)
 	for _, rawReq := range req.GetRawRequests() {
 		rawRep, ok := rawReportsMap[rawReq.GetExternalID()]
 		if !ok {
@@ -167,11 +168,7 @@ func handleMsgReportData(ctx sdk.Context, k Keeper, m MsgReportData) (*sdk.Resul
 			continue
 		}
 
-		ds, err := k.GetDataSource(ctx, rawReq.GetDataSourceID())
-		if err != nil {
-			return nil, sdkerrors.Wrap(err, "getting data source for rewarding")
-		}
-		params := k.GetParams(ctx)
+		ds := k.MustGetDataSource(ctx, rawReq.GetDataSourceID())
 		k.SetDataProviderAccumulatedReward(ctx, ds.Owner, utils.CalculateReward(rawRep.Data, params.DataProviderRewardPerByte.Dec))
 	}
 

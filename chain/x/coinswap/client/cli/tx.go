@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"github.com/GeoDB-Limited/odincore/chain/x/coinswap/types"
+	types2 "github.com/GeoDB-Limited/odincore/chain/x/common/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/client/flags"
@@ -51,12 +52,12 @@ $ %s tx coinswap exchange geo loki 10loki --from mykey
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 			txBldr := auth.NewTxBuilderFromCLI(inBuf).WithTxEncoder(utils.GetTxEncoder(cdc))
 
-			fromDenom, err := types.ParseDenom(args[0])
+			fromDenom, err := types2.ParseDenom(args[0])
 			if err != nil {
 				return err
 			}
 
-			toDenom, err := types.ParseDenom(args[1])
+			toDenom, err := types2.ParseDenom(args[1])
 			if err != nil {
 				return err
 			}

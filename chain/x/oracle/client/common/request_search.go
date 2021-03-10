@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	commontypes "github.com/GeoDB-Limited/odincore/chain/x/common/types"
 	"sort"
 
 	"github.com/cosmos/cosmos-sdk/client/context"
@@ -37,7 +38,7 @@ func queryRequest(route string, cliCtx context.CLIContext, rid types.RequestID) 
 	if err != nil {
 		return types.QueryRequestResult{}, 0, err
 	}
-	var result types.QueryResult
+	var result commontypes.QueryResult
 	if err := json.Unmarshal(bz, &result); err != nil {
 		return types.QueryRequestResult{}, 0, err
 	}
@@ -51,11 +52,11 @@ func QuerySearchLatestRequest(
 ) ([]byte, int64, error) {
 	id, err := queryLatestRequest(cliCtx, oid, calldata, askCount, minCount)
 	if err != nil {
-		bz, err := types.QueryNotFound("request with specified specification not found")
+		bz, err := commontypes.QueryNotFound(types.ModuleCdc, "request with specified specification not found")
 		return bz, 0, err
 	}
 	out, h, err := queryRequest(route, cliCtx, id)
-	bz, err := types.QueryOK(out)
+	bz, err := commontypes.QueryOK(types.ModuleCdc, out)
 	return bz, h, err
 }
 
@@ -127,12 +128,12 @@ func QueryMultiSearchLatestRequest(
 		return nil, 0, err
 	}
 	if len(queryRequestResults) == 0 {
-		bz, err := types.QueryNotFound("request with specified specification not found")
+		bz, err := commontypes.QueryNotFound(types.ModuleCdc, "request with specified specification not found")
 		return bz, 0, err
 	}
 	if len(queryRequestResults) > limit {
 		queryRequestResults = queryRequestResults[:limit]
 	}
-	bz, err := types.QueryOK(queryRequestResults)
+	bz, err := commontypes.QueryOK(types.ModuleCdc, queryRequestResults)
 	return bz, h, err
 }
