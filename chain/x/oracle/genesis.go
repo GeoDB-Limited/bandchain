@@ -17,7 +17,7 @@ type GenesisState struct {
 	Params                  types.Params         `json:"params" yaml:"params"`
 	DataSources             []types.DataSource   `json:"data_sources"  yaml:"data_sources"`
 	OracleScripts           []types.OracleScript `json:"oracle_scripts"  yaml:"oracle_scripts"`
-	OraclePool    types.OraclePool     `json:"oracle_pool" yaml:"oracle_pool"`
+	OraclePool              types.OraclePool     `json:"oracle_pool" yaml:"oracle_pool"`
 }
 
 // DefaultGenesisState returns the default oracle genesis state.

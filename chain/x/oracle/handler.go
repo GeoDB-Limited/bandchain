@@ -154,10 +154,20 @@ func handleMsgReportData(ctx sdk.Context, k Keeper, m MsgReportData) (*sdk.Resul
 
 	// at this moment we are sure, that all the raw reports here are validated
 	// so we can distribute the reward for them in end-block
-	// todo potential memory leak
-	for _, rawRep := range m.RawReports {
-		did := k.GetDataSourceID(ctx, m.RequestID, rawRep.ExternalID)
-		ds, err := k.GetDataSource(ctx, did)
+	rawReportsMap := make(map[types.ExternalID]types.RawReport)
+	for _, rawRep := range m.GetRawReports() {
+		rawReportsMap[rawRep.ExternalID] = rawRep
+	}
+
+	req := k.MustGetRequest(ctx, m.RequestID)
+	for _, rawReq := range req.GetRawRequests() {
+		rawRep, ok := rawReportsMap[rawReq.GetExternalID()]
+		if !ok {
+			// this request had no report
+			continue
+		}
+
+		ds, err := k.GetDataSource(ctx, rawReq.GetDataSourceID())
 		if err != nil {
 			return nil, sdkerrors.Wrap(err, "getting data source for rewarding")
 		}
@@ -165,7 +175,6 @@ func handleMsgReportData(ctx sdk.Context, k Keeper, m MsgReportData) (*sdk.Resul
 		k.SetDataProviderAccumulatedReward(ctx, ds.Owner, utils.CalculateReward(rawRep.Data, params.DataProviderRewardPerByte.Dec))
 	}
 
-	req := k.MustGetRequest(ctx, m.RequestID)
 	if k.GetReportCount(ctx, m.RequestID) == req.MinCount {
 		// At the exact moment when the number of reports is sufficient, we add the request to
 		// the pending resolve list. This can happen at most one time for any request.

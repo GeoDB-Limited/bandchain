@@ -3,20 +3,8 @@ package keeper
 import (
 	"github.com/GeoDB-Limited/odincore/chain/x/oracle/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	distr "github.com/cosmos/cosmos-sdk/x/distribution"
 )
-
-func (k Keeper) SetDataSourceID(ctx sdk.Context, rid types.RequestID, eid types.ExternalID, did types.DataSourceID) {
-	key := types.DataSourceByExternalIDPrefixKey(rid, eid)
-	ctx.KVStore(k.storeKey).Set(key, k.cdc.MustMarshalBinaryBare(did))
-}
-
-func (k Keeper) GetDataSourceID(ctx sdk.Context, rid types.RequestID, eid types.ExternalID) types.DataSourceID {
-	key := types.DataSourceByExternalIDPrefixKey(rid, eid)
-	bz := ctx.KVStore(k.storeKey).Get(key)
-	var did types.DataSourceID
-	k.cdc.MustUnmarshalBinaryBare(bz, &did)
-	return did
-}
 
 func (k Keeper) SetDataProviderAccumulatedReward(ctx sdk.Context, acc sdk.AccAddress, reward sdk.Dec) {
 	key := types.DataProviderRewardsPrefixKey(acc)
@@ -55,7 +43,10 @@ func (k Keeper) GetOracleDataProviderRewardDenom(ctx sdk.Context) (denom string)
 	return denom
 }
 
+// todo optimize store queries
+// sends rewards from oracle pool to data providers, that have given data for the passed request
 func (k Keeper) AllocateRewardsToDataProviders(ctx sdk.Context, rid types.RequestID) {
+	logger := k.Logger(ctx)
 	request := k.MustGetRequest(ctx, rid)
 
 	for _, rawReq := range request.RawRequests {
@@ -63,10 +54,27 @@ func (k Keeper) AllocateRewardsToDataProviders(ctx sdk.Context, rid types.Reques
 		if !k.HasDataProviderReward(ctx, ds.Owner) {
 			continue
 		}
-		//reward := k.GetDataProviderAccumulatedReward(ctx, ds.Owner)
-		//dataProviderRewardDenom := k.GetOracleDataProviderRewardDenom(ctx)
-		//rewardCoin := sdk.NewDecCoinFromDec(dataProviderRewardDenom, reward)
+		reward := k.GetDataProviderAccumulatedReward(ctx, ds.Owner)
+		dataProviderRewardDenom := k.GetOracleDataProviderRewardDenom(ctx)
+		rewardCoinDec := sdk.NewDecCoinFromDec(dataProviderRewardDenom, reward)
 
-		//k.supplyKeeper.SendCoinsFromModuleToAccount()
+		// rewards are lying in the distribution fee pool
+		feePool := k.distrKeeper.GetFeePool(ctx)
+		diff, hasNeg := feePool.CommunityPool.SafeSub(sdk.NewDecCoins(rewardCoinDec))
+		if hasNeg {
+			logger.With("lack", diff, "denom", dataProviderRewardDenom).Error("oracle pool does not have enough coins to reward data providers")
+			// not return because maybe still enough coins to pay someone
+			continue
+		}
+		feePool.CommunityPool = diff
+
+		rewardCoin, _ := rewardCoinDec.TruncateDecimal()
+		err := k.supplyKeeper.SendCoinsFromModuleToAccount(ctx, distr.ModuleName, ds.Owner, sdk.NewCoins(rewardCoin))
+		if err != nil {
+			panic(err)
+		}
+
+		k.distrKeeper.SetFeePool(ctx, feePool)
+		k.ClearDataProviderAccumulatedReward(ctx, ds.Owner)
 	}
 }

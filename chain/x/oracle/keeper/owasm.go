@@ -96,9 +96,8 @@ func (k Keeper) PrepareRequest(ctx sdk.Context, r types.RequestSpec) error {
 		event = event.AppendAttributes(sdk.NewAttribute(types.AttributeKeyValidator, val.String()))
 	}
 	ctx.EventManager().EmitEvent(event)
-	// Emit an event for each of the raw data requests and add the mapping between the external id and data source id
+	// Emit an event for each of the raw data requests
 	for _, rawReq := range env.GetRawRequests() {
-		k.SetDataSourceID(ctx, rid, rawReq.ExternalID, rawReq.DataSourceID)
 		ds, err := k.GetDataSource(ctx, rawReq.DataSourceID)
 		if err != nil {
 			return err
