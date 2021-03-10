@@ -185,6 +185,31 @@ func handleMsgReportData(ctx sdk.Context, k Keeper, m MsgReportData) (*sdk.Resul
 	return &sdk.Result{Events: ctx.EventManager().Events()}, nil
 }
 
+func handleMsgReportDataOld(ctx sdk.Context, k Keeper, m MsgReportData) (*sdk.Result, error) {
+	if !k.IsReporter(ctx, m.Validator, m.Reporter) {
+		return nil, types.ErrReporterNotAuthorized
+	}
+	if m.RequestID <= k.GetRequestLastExpired(ctx) {
+		return nil, types.ErrRequestAlreadyExpired
+	}
+	err := k.AddReport(ctx, m.RequestID, types.NewReport(m.Validator, !k.HasResult(ctx, m.RequestID), m.RawReports))
+	if err != nil {
+		return nil, err
+	}
+	req := k.MustGetRequest(ctx, m.RequestID)
+	if k.GetReportCount(ctx, m.RequestID) == req.MinCount {
+		// At the exact moment when the number of reports is sufficient, we add the request to
+		// the pending resolve list. This can happen at most one time for any request.
+		k.AddPendingRequest(ctx, m.RequestID)
+	}
+	ctx.EventManager().EmitEvent(sdk.NewEvent(
+		types.EventTypeReport,
+		sdk.NewAttribute(types.AttributeKeyID, fmt.Sprintf("%d", m.RequestID)),
+		sdk.NewAttribute(types.AttributeKeyValidator, m.Validator.String()),
+	))
+	return &sdk.Result{Events: ctx.EventManager().Events()}, nil
+}
+
 func handleMsgActivate(ctx sdk.Context, k Keeper, m MsgActivate) (*sdk.Result, error) {
 	err := k.Activate(ctx, m.Validator)
 	if err != nil {

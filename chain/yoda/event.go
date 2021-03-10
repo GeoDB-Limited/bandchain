@@ -10,14 +10,16 @@ import (
 )
 
 type rawRequest struct {
-	dataSourceID   types.DataSourceID
-	dataSourceHash string
-	externalID     types.ExternalID
-	calldata       string
+	dataSourceID              types.DataSourceID
+	dataSourceHash            string
+	externalID                types.ExternalID
+	calldata                  string
+	dataSource                types.DataSource
+	DataProviderRewardPerByte sdk.Dec
 }
 
 // GetRawRequests returns the list of all raw data requests in the given log.
-func GetRawRequests(log sdk.ABCIMessageLog) ([]rawRequest, error) {
+func GetRawRequests(c *Context, l *Logger, log sdk.ABCIMessageLog) ([]rawRequest, error) {
 	dataSourceIDs := GetEventValues(log, types.EventTypeRawRequest, types.AttributeKeyDataSourceID)
 	dataSourceHashList := GetEventValues(log, types.EventTypeRawRequest, types.AttributeKeyDataSourceHash)
 	externalIDs := GetEventValues(log, types.EventTypeRawRequest, types.AttributeKeyExternalID)
@@ -42,11 +44,23 @@ func GetRawRequests(log sdk.ABCIMessageLog) ([]rawRequest, error) {
 			return nil, fmt.Errorf("Failed to parse external id: %s", err.Error())
 		}
 
+		ds, err := GetDataSource(c, l, types.DataSourceID(dataSourceID))
+		if err != nil {
+			return nil, fmt.Errorf("failed to get data source by id: %s", err.Error())
+		}
+
+		reward, err := GetDataProviderRewardPerByte(c, l)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get data provider reward per byte: %s", err.Error())
+		}
+
 		reqs = append(reqs, rawRequest{
-			dataSourceID:   types.DataSourceID(dataSourceID),
-			dataSourceHash: dataSourceHashList[idx],
-			externalID:     types.ExternalID(externalID),
-			calldata:       calldataList[idx],
+			dataSourceID:              types.DataSourceID(dataSourceID),
+			dataSourceHash:            dataSourceHashList[idx],
+			externalID:                types.ExternalID(externalID),
+			calldata:                  calldataList[idx],
+			dataSource:                ds,
+			DataProviderRewardPerByte: reward,
 		})
 	}
 	return reqs, nil

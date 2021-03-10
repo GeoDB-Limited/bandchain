@@ -2,6 +2,7 @@ package yoda
 
 import (
 	"encoding/hex"
+	"github.com/pkg/errors"
 	"strconv"
 
 	ckeys "github.com/cosmos/cosmos-sdk/client/keys"
@@ -94,7 +95,7 @@ func handleRequestLog(c *Context, l *Logger, log sdk.ABCIMessageLog) {
 
 	l.Info(":delivery_truck: Processing incoming request event")
 
-	reqs, err := GetRawRequests(log)
+	reqs, err := GetRawRequests(c, l, log)
 	if err != nil {
 		l.Error(":skull: Failed to parse raw requests with error: %s", err.Error())
 	}
@@ -163,17 +164,32 @@ func handlePendingRequest(c *Context, l *Logger, id types.RequestID) {
 	// prepare raw requests
 	for _, raw := range req.RawRequests {
 
-		hash, err := GetDataSourceHash(c, l, raw.DataSourceID)
+		ds, err := GetDataSource(c, l, raw.DataSourceID)
 		if err != nil {
 			l.Error(":skull: Failed to get data source hash with error: %s", err.Error())
 			return
 		}
 
+		hash, ok := c.dataSourceCache.Load(raw.DataSourceID)
+		if !ok {
+			l.Error(":skull: couldn't load data source id from cache")
+			panic(errors.New("couldn't load data source id from cache"))
+		}
+
+		reward, err := GetDataProviderRewardPerByte(c, l)
+		if err != nil {
+			l.Error("failed to get data provider reward per byte: %s", err.Error())
+			panic(errors.New("failed to get data provider reward per byte"))
+			return
+		}
+
 		rawRequests = append(rawRequests, rawRequest{
-			dataSourceID:   raw.DataSourceID,
-			dataSourceHash: hash,
-			externalID:     raw.ExternalID,
-			calldata:       string(raw.Calldata),
+			dataSourceID:              raw.DataSourceID,
+			dataSourceHash:            hash.(string),
+			externalID:                raw.ExternalID,
+			calldata:                  string(raw.Calldata),
+			dataSource:                ds,
+			DataProviderRewardPerByte: reward,
 		})
 	}
 

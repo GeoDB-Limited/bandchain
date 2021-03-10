@@ -11,7 +11,7 @@ const (
 	// cosmos
 	baseFixedGas        = uint64(37764)
 	baseTransactionSize = uint64(200)
-	txCostPerByte       = uint64(5) // Using DefaultTxSizeCostPerByte of BandChain
+	txCostPerByte       = uint64(10) // Using DefaultTxSizeCostPerByte of BandChain
 
 	readingBaseCost = uint64(1000)
 	writingBaseCost = uint64(2000)

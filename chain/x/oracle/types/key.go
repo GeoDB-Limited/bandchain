@@ -47,8 +47,6 @@ var (
 	ReporterStoreKeyPrefix = []byte{0x05}
 	// ValidatorStatusKeyPrefix is the prefix for validator status store.
 	ValidatorStatusKeyPrefix = []byte{0x06}
-	// ExternalIDToDataSourceKeyPrefix is the prefix for the external ids mapped to data source ids
-	ExternalIDToDataSourceKeyPrefix = []byte{0x07}
 	// DataProviderRewardsKeyPrefix is the prefix for the data provider address with reward
 	DataProviderRewardsKeyPrefix = []byte{0x08}
 	// ResultStoreKeyPrefix is the prefix for request result store.
@@ -102,11 +100,6 @@ func ReportsOfValidatorPrefixKey(reqID RequestID, val sdk.ValAddress) []byte {
 // ReportersOfValidatorPrefixKey returns the prefix key to get all reporters of a validator.
 func ReportersOfValidatorPrefixKey(val sdk.ValAddress) []byte {
 	return append(ReporterStoreKeyPrefix, val.Bytes()...)
-}
-
-func DataSourceByExternalIDPrefixKey(rid RequestID, eid ExternalID) []byte {
-	key := append(ExternalIDToDataSourceKeyPrefix, sdk.Uint64ToBigEndian(uint64(rid))...)
-	return append(key, sdk.Uint64ToBigEndian(uint64(eid))...)
 }
 
 func DataProviderRewardsPrefixKey(acc sdk.AccAddress) []byte {

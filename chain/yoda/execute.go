@@ -162,24 +162,47 @@ func GetExecutable(c *Context, l *Logger, hash string) ([]byte, error) {
 	return resValue, nil
 }
 
+// todo remove
 // GetDataSourceHash fetches data source hash by id
 func GetDataSourceHash(c *Context, l *Logger, id types.DataSourceID) (string, error) {
 	if hash, ok := c.dataSourceCache.Load(id); ok {
 		return hash.(string), nil
 	}
 
+	_, err := GetDataSource(c, l, id)
+	if err != nil {
+		return "", err
+	}
+
+	hash, _ := c.dataSourceCache.Load(id)
+
+	return hash.(string), nil
+}
+
+func GetDataSource(c *Context, l *Logger, id types.DataSourceID) (types.DataSource, error) {
 	res, err := c.client.ABCIQuery(fmt.Sprintf("/store/%s/key", types.StoreKey), types.DataSourceStoreKey(id))
 	if err != nil {
 		l.Debug(":skull: Failed to get data source with error: %s", err.Error())
-		return "", err
+		return types.DataSource{}, err
 	}
 
 	var d types.DataSource
 	cdc.MustUnmarshalBinaryBare(res.Response.Value, &d)
 
-	hash, _ := c.dataSourceCache.LoadOrStore(id, d.Filename)
+	_, _ = c.dataSourceCache.LoadOrStore(id, d.Filename) // just put hash
+	return d, nil
+}
 
-	return hash.(string), nil
+func GetDataProviderRewardPerByte(c *Context, l *Logger) (sdk.Dec, error) {
+	res, err := c.client.ABCIQuery(fmt.Sprintf("/store/%s/key", types.StoreKey), types.KeyDataProviderRewardPerByte)
+	if err != nil {
+		l.Debug(":skull: Failed to get data provider reward per byte with error: %s", err.Error())
+		return sdk.Dec{}, err
+	}
+
+	var d sdk.Dec
+	cdc.MustUnmarshalBinaryBare(res.Response.Value, &d)
+	return d, nil
 }
 
 // GetRequest fetches request by id
