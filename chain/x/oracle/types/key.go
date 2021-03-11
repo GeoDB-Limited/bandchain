@@ -33,8 +33,6 @@ var (
 	// OraclePoolStoreKey is the key that keeps the oracle pool
 	OraclePoolStoreKey = append(GlobalStoreKeyPrefix, []byte("OraclePool")...) // key for global oracle pool state
 
-	OracleDataProviderRewardDenomStoreKey = append(GlobalStoreKeyPrefix, []byte("OracleDataProviderRewardDenom")...)
-
 	// RequestStoreKeyPrefix is the prefix for request store.
 	RequestStoreKeyPrefix = []byte{0x01}
 	// ReportStoreKeyPrefix is the prefix for report store.
@@ -48,7 +46,7 @@ var (
 	// ValidatorStatusKeyPrefix is the prefix for validator status store.
 	ValidatorStatusKeyPrefix = []byte{0x06}
 	// DataProviderRewardsKeyPrefix is the prefix for the data provider address with reward
-	DataProviderRewardsKeyPrefix = []byte{0x08}
+	DataProviderRewardsKeyPrefix = []byte{0x07}
 	// ResultStoreKeyPrefix is the prefix for request result store.
 	ResultStoreKeyPrefix = []byte{0xff}
 )

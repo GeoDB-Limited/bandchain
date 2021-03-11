@@ -93,7 +93,7 @@ func SubmitReport(c *Context, l *Logger, keyIndex int64, reports []ReportMsgWith
 		var txHash string
 		l.Info(":e-mail: Sending report transaction attempt: (%d/%d)", sendAttempt, c.maxTry)
 		for broadcastTry := uint64(1); broadcastTry <= c.maxTry; broadcastTry++ {
-			l.Info(":writing_hand: Try to sign and broadcast report transaction(%d/%d)", broadcastTry, c.maxTry)
+			l.Info(":writing_hand: Try to sign and broadcast report transaction(%d/%d) with gas limit: %d", broadcastTry, c.maxTry, gasLimit)
 			hash, err := signAndBroadcast(c, key, msgs, gasLimit, memo)
 			if err != nil {
 				// Use info level because this error can happen and retry process can solve this error.
@@ -160,23 +160,6 @@ func GetExecutable(c *Context, l *Logger, hash string) ([]byte, error) {
 
 	l.Debug(":balloon: Received data source hash: %s content: %q", hash, resValue[:32])
 	return resValue, nil
-}
-
-// todo remove
-// GetDataSourceHash fetches data source hash by id
-func GetDataSourceHash(c *Context, l *Logger, id types.DataSourceID) (string, error) {
-	if hash, ok := c.dataSourceCache.Load(id); ok {
-		return hash.(string), nil
-	}
-
-	_, err := GetDataSource(c, l, id)
-	if err != nil {
-		return "", err
-	}
-
-	hash, _ := c.dataSourceCache.Load(id)
-
-	return hash.(string), nil
 }
 
 func GetDataSource(c *Context, l *Logger, id types.DataSourceID) (types.DataSource, error) {

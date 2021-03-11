@@ -10,12 +10,11 @@ import (
 )
 
 type rawRequest struct {
-	dataSourceID              types.DataSourceID
-	dataSourceHash            string
-	externalID                types.ExternalID
-	calldata                  string
-	dataSource                types.DataSource
-	DataProviderRewardPerByte sdk.Dec
+	dataSourceID   types.DataSourceID
+	dataSourceHash string
+	externalID     types.ExternalID
+	calldata       string
+	dataSource     types.DataSource
 }
 
 // GetRawRequests returns the list of all raw data requests in the given log.
@@ -49,18 +48,12 @@ func GetRawRequests(c *Context, l *Logger, log sdk.ABCIMessageLog) ([]rawRequest
 			return nil, fmt.Errorf("failed to get data source by id: %s", err.Error())
 		}
 
-		reward, err := GetDataProviderRewardPerByte(c, l)
-		if err != nil {
-			return nil, fmt.Errorf("failed to get data provider reward per byte: %s", err.Error())
-		}
-
 		reqs = append(reqs, rawRequest{
-			dataSourceID:              types.DataSourceID(dataSourceID),
-			dataSourceHash:            dataSourceHashList[idx],
-			externalID:                types.ExternalID(externalID),
-			calldata:                  calldataList[idx],
-			dataSource:                ds,
-			DataProviderRewardPerByte: reward,
+			dataSourceID:   types.DataSourceID(dataSourceID),
+			dataSourceHash: dataSourceHashList[idx],
+			externalID:     types.ExternalID(externalID),
+			calldata:       calldataList[idx],
+			dataSource:     ds,
 		})
 	}
 	return reqs, nil

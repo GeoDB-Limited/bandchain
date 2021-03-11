@@ -285,7 +285,7 @@ func NewParams(
 	SamplingTryCount uint64,
 	OracleRewardPercentage uint64,
 	InactivePenaltyDuration uint64,
-	DataProviderRewardPerByte DecProto,
+	DataProviderRewardPerByte CoinDecProto,
 ) Params {
 	return Params{
 		MaxRawRequestCount:        MaxRawRequestCount,

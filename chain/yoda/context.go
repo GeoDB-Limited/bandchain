@@ -19,6 +19,7 @@ type FeeEstimationData struct {
 	minCount    int64
 	callData    []byte
 	rawRequests []rawRequest
+	reports     []types.RawReport
 	clientID    string
 }
 

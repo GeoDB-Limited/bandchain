@@ -71,8 +71,8 @@ func (k Keeper) GetParam(ctx sdk.Context, key []byte) (res uint64) {
 }
 
 // SetParam saves the given key-value parameter to the store.
-func (k Keeper) SetParam(ctx sdk.Context, key []byte, value uint64) {
-	k.paramSpace.Set(ctx, key, value)
+func (k Keeper) SetParams(ctx sdk.Context, value types.Params) {
+	k.paramSpace.SetParamSet(ctx, &value)
 }
 
 // GetParams returns all current parameters as a types.Params instance.

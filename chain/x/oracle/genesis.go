@@ -3,8 +3,6 @@ package oracle
 import (
 	"encoding/json"
 	"fmt"
-	commontypes "github.com/GeoDB-Limited/odincore/chain/x/common/types"
-
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	abci "github.com/tendermint/tendermint/abci/types"
@@ -12,41 +10,27 @@ import (
 	"github.com/GeoDB-Limited/odincore/chain/x/oracle/types"
 )
 
-const (
-	DefaultDataProviderRewardDenom = "geo"
-)
-
 // GenesisState is the oracle state that must be provided at genesis.
 type GenesisState struct {
-	DataProviderRewardDenom commontypes.Denom    `json:"data_provider_reward_denom" yaml:"data_provider_reward_denom"`
-	Params                  types.Params         `json:"params" yaml:"params"`
-	DataSources             []types.DataSource   `json:"data_sources"  yaml:"data_sources"`
-	OracleScripts           []types.OracleScript `json:"oracle_scripts"  yaml:"oracle_scripts"`
-	OraclePool              types.OraclePool     `json:"oracle_pool" yaml:"oracle_pool"`
+	Params        types.Params         `json:"params" yaml:"params"`
+	DataSources   []types.DataSource   `json:"data_sources"  yaml:"data_sources"`
+	OracleScripts []types.OracleScript `json:"oracle_scripts"  yaml:"oracle_scripts"`
+	OraclePool    types.OraclePool     `json:"oracle_pool" yaml:"oracle_pool"`
 }
 
 // DefaultGenesisState returns the default oracle genesis state.
 func DefaultGenesisState() GenesisState {
 	return GenesisState{
-		DataProviderRewardDenom: DefaultDataProviderRewardDenom,
-		Params:                  types.DefaultParams(),
-		DataSources:             []types.DataSource{},
-		OracleScripts:           []types.OracleScript{},
-		OraclePool:              types.InitialOraclePool(),
+		Params:        types.DefaultParams(),
+		DataSources:   []types.DataSource{},
+		OracleScripts: []types.OracleScript{},
+		OraclePool:    types.InitialOraclePool(),
 	}
 }
 
 // InitGenesis performs genesis initialization for the oracle module.
 func InitGenesis(ctx sdk.Context, k Keeper, supplyKeeper types.SupplyKeeper, data GenesisState) []abci.ValidatorUpdate {
-	k.SetParam(ctx, types.KeyMaxRawRequestCount, data.Params.MaxRawRequestCount)
-	k.SetParam(ctx, types.KeyMaxAskCount, data.Params.MaxAskCount)
-	k.SetParam(ctx, types.KeyExpirationBlockCount, data.Params.ExpirationBlockCount)
-	k.SetParam(ctx, types.KeyBaseRequestGas, data.Params.BaseRequestGas)
-	k.SetParam(ctx, types.KeyPerValidatorRequestGas, data.Params.PerValidatorRequestGas)
-	k.SetParam(ctx, types.KeySamplingTryCount, data.Params.SamplingTryCount)
-	k.SetParam(ctx, types.KeyOracleRewardPercentage, data.Params.OracleRewardPercentage)
-	k.SetParam(ctx, types.KeyInactivePenaltyDuration, data.Params.InactivePenaltyDuration)
-	k.SetOracleDataProviderRewardDenom(ctx, data.DataProviderRewardDenom)
+	k.SetParams(ctx, data.Params)
 	k.SetDataSourceCount(ctx, 0)
 	k.SetOracleScriptCount(ctx, 0)
 	k.SetRequestCount(ctx, 0)

@@ -2,7 +2,7 @@ package yoda
 
 import (
 	"encoding/hex"
-	"github.com/pkg/errors"
+	"fmt"
 	"strconv"
 
 	ckeys "github.com/cosmos/cosmos-sdk/client/keys"
@@ -142,6 +142,7 @@ func handleRequestLog(c *Context, l *Logger, log sdk.ABCIMessageLog) {
 			callData:    callData,
 			rawRequests: reqs,
 			clientID:    clientID,
+			reports:     reports,
 		},
 	}
 }
@@ -173,23 +174,15 @@ func handlePendingRequest(c *Context, l *Logger, id types.RequestID) {
 		hash, ok := c.dataSourceCache.Load(raw.DataSourceID)
 		if !ok {
 			l.Error(":skull: couldn't load data source id from cache")
-			panic(errors.New("couldn't load data source id from cache"))
-		}
-
-		reward, err := GetDataProviderRewardPerByte(c, l)
-		if err != nil {
-			l.Error("failed to get data provider reward per byte: %s", err.Error())
-			panic(errors.New("failed to get data provider reward per byte"))
-			return
+			panic(fmt.Errorf("couldn't load data source id from cache"))
 		}
 
 		rawRequests = append(rawRequests, rawRequest{
-			dataSourceID:              raw.DataSourceID,
-			dataSourceHash:            hash.(string),
-			externalID:                raw.ExternalID,
-			calldata:                  string(raw.Calldata),
-			dataSource:                ds,
-			DataProviderRewardPerByte: reward,
+			dataSourceID:   raw.DataSourceID,
+			dataSourceHash: hash.(string),
+			externalID:     raw.ExternalID,
+			calldata:       string(raw.Calldata),
+			dataSource:     ds,
 		})
 	}
 
@@ -206,6 +199,7 @@ func handlePendingRequest(c *Context, l *Logger, id types.RequestID) {
 			callData:    req.Calldata,
 			rawRequests: rawRequests,
 			clientID:    req.ClientID,
+			reports:     reports,
 		},
 	}
 }

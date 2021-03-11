@@ -25,10 +25,14 @@ const (
 	baseReportCost    = uint64(4024)
 	addingPendingCost = uint64(4500)
 
+	baseDecSize = uint64(64)
+
 	baseRequestSize = uint64(32)
 	addressSize     = uint64(20)
 
 	baseRawRequestSize = uint64(16)
+
+	basicOracleParamsSize = uint64(64) // (8 uint64) * (8 params)
 )
 
 func estimateTxSize(msgs []sdk.Msg) uint64 {
@@ -72,11 +76,42 @@ func estimateReadingRequestCost(f FeeEstimationData) uint64 {
 	return cost
 }
 
+func estimateReadingDataSourceCost(f FeeEstimationData) uint64 {
+	cost := readingBaseCost
+
+	dataSourceMap := make(map[types.ExternalID]types.DataSource)
+	for _, rawRequest := range f.rawRequests {
+		dataSourceMap[rawRequest.externalID] = rawRequest.dataSource
+	}
+
+	for _, rawRep := range f.reports {
+		cost += uint64(len(cdc.MustMarshalBinaryBare(dataSourceMap[rawRep.ExternalID]))) * readingCostPerByte
+	}
+	return cost
+}
+
 func estimateReportHandleCost(msg sdk.Msg, f FeeEstimationData) uint64 {
 	cost := baseReportCost
 
 	// read request twice
 	cost += 2 * estimateReadingRequestCost(f)
+
+	// read oracle params
+	cost += readingBaseCost + readingCostPerByte*(basicOracleParamsSize+baseDecSize)
+
+	// write reward
+	writeRewardCost := writingBaseCost + addressSize*writingCostPerByte + baseDecSize*writingCostPerByte
+
+	// read reward
+	readRewardCost := readingBaseCost + addressSize*readingCostPerByte + baseDecSize*readingCostPerByte
+
+	// store reward for every provider
+	storeRewardCost := writeRewardCost + 2*readRewardCost
+
+	cost += storeRewardCost * uint64(len(f.reports))
+
+	// we need to read data sources
+	cost += estimateReadingDataSourceCost(f)
 
 	// write report once
 	cost += estimateStoringReportCost(msg)

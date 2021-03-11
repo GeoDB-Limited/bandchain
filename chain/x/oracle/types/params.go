@@ -21,10 +21,11 @@ const (
 	DefaultSamplingTryCount        = uint64(3)
 	DefaultOracleRewardPercentage  = uint64(70)
 	DefaultInactivePenaltyDuration = uint64(10 * time.Minute)
+	DefaultDataProviderRewardDenom = "geo"
 )
 
 var (
-	DefaultDataProviderRewardPerByte = NewDecProto()
+	DefaultDataProviderRewardPerByte = NewCoinDecProto(DefaultDataProviderRewardDenom)
 )
 
 // nolint
@@ -109,12 +110,12 @@ func validateUint64(name string, positiveOnly bool) func(interface{}) error {
 }
 
 func validateDataProviderRewardPerByte(i interface{}) error {
-	v, ok := i.(DecProto)
+	v, ok := i.(CoinDecProto)
 	if !ok {
 		return fmt.Errorf("invalid parameter type: %T", i)
 	}
 
-	if v.IsNegative() {
+	if v.Amount.IsNegative() {
 		return fmt.Errorf("data provider reward must be positive: %v", v)
 	}
 	return nil

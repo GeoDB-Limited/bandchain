@@ -1,25 +1,26 @@
 package types
 
 import (
+	"github.com/GeoDB-Limited/odincore/chain/x/common/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-type DecProto struct {
-	sdk.Dec
+type CoinDecProto sdk.DecCoin
+
+func NewCoinDecProto(denom types.Denom) CoinDecProto {
+	return CoinDecProto(sdk.NewInt64DecCoin(denom.String(), 0))
 }
 
-func NewDecProto() DecProto {
-	return DecProto{
-		Dec: sdk.NewDec(0),
-	}
+func (p CoinDecProto) Value() sdk.DecCoin {
+	return sdk.DecCoin(p)
 }
 
-func (p DecProto) Size() int {
-	return len(p.Bytes())
+func (p CoinDecProto) Size() int {
+	return len(ModuleCdc.MustMarshalJSON(p))
 }
 
-func (p DecProto) MarshalTo(dst []byte) (int, error) {
-	res, err := p.MarshalJSON()
+func (p CoinDecProto) MarshalTo(dst []byte) (int, error) {
+	res, err := ModuleCdc.MarshalJSON(p)
 	if err != nil {
 		return 0, err
 	}
@@ -27,10 +28,10 @@ func (p DecProto) MarshalTo(dst []byte) (int, error) {
 	return len(dst), nil
 }
 
-func (p DecProto) Unmarshal(dst []byte) error {
-	return p.Dec.UnmarshalJSON(dst)
+func (p CoinDecProto) Unmarshal(src []byte) error {
+	return ModuleCdc.UnmarshalJSON(src, &p)
 }
 
-func (p DecProto) Equal(other DecProto) bool {
-	return p.Dec.Equal(other.Dec)
+func (p CoinDecProto) Equal(other CoinDecProto) bool {
+	return p.Denom == other.Denom && p.Amount.Equal(other.Amount)
 }
