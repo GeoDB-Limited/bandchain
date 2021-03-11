@@ -81,6 +81,11 @@ func (k Keeper) GetParams(ctx sdk.Context) (params types.Params) {
 	return params
 }
 
+func (k Keeper) GetDataProviderRewardPerByteParam(ctx sdk.Context) (res types.CoinDecProto) {
+	k.paramSpace.Get(ctx, types.KeyDataProviderRewardPerByte, &res)
+	return res
+}
+
 // SetRollingSeed sets the rolling seed value to be provided value.
 func (k Keeper) SetRollingSeed(ctx sdk.Context, rollingSeed []byte) {
 	ctx.KVStore(k.storeKey).Set(types.RollingSeedStoreKey, rollingSeed)

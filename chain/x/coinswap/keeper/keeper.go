@@ -44,8 +44,14 @@ func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 	return ctx.Logger().With("module", fmt.Sprintf("x/%s", types.ModuleName))
 }
 
-// GetParam returns the parameter as specified by key as sdk.Dec
-func (k Keeper) GetParam(ctx sdk.Context, key []byte) (res sdk.Dec) {
+// GetDecParam returns the parameter as specified by key as sdk.Dec
+func (k Keeper) GetDecParam(ctx sdk.Context, key []byte) (res sdk.Dec) {
+	k.paramSpace.Get(ctx, key, &res)
+	return res
+}
+
+// GetDecParam returns the parameter as specified by key as types.ValidExchanges
+func (k Keeper) GetValidExchangesParam(ctx sdk.Context, key []byte) (res types.ValidExchanges) {
 	k.paramSpace.Get(ctx, key, &res)
 	return res
 }

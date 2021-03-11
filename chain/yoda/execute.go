@@ -176,6 +176,7 @@ func GetDataSource(c *Context, l *Logger, id types.DataSourceID) (types.DataSour
 	return d, nil
 }
 
+// todo for refactoring
 func GetDataProviderRewardPerByte(c *Context, l *Logger) (sdk.Dec, error) {
 	res, err := c.client.ABCIQuery(fmt.Sprintf("/store/%s/key", types.StoreKey), types.KeyDataProviderRewardPerByte)
 	if err != nil {

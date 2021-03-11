@@ -160,7 +160,7 @@ func handleMsgReportData(ctx sdk.Context, k Keeper, m MsgReportData) (*sdk.Resul
 	}
 
 	req := k.MustGetRequest(ctx, m.RequestID)
-	params := k.GetParams(ctx)
+	dataProviderRewardPerByte := k.GetDataProviderRewardPerByteParam(ctx)
 	for _, rawReq := range req.GetRawRequests() {
 		rawRep, ok := rawReportsMap[rawReq.GetExternalID()]
 		if !ok {
@@ -169,7 +169,7 @@ func handleMsgReportData(ctx sdk.Context, k Keeper, m MsgReportData) (*sdk.Resul
 		}
 
 		ds := k.MustGetDataSource(ctx, rawReq.GetDataSourceID())
-		k.SetDataProviderAccumulatedReward(ctx, ds.Owner, utils.CalculateReward(rawRep.Data, params.DataProviderRewardPerByte.Value()))
+		k.SetDataProviderAccumulatedReward(ctx, ds.Owner, utils.CalculateReward(rawRep.Data, dataProviderRewardPerByte.Value()))
 	}
 
 	if k.GetReportCount(ctx, m.RequestID) == req.MinCount {

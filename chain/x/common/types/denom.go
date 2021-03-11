@@ -25,3 +25,7 @@ func (d Denom) Base() string {
 func (d Denom) String() string {
 	return string(d)
 }
+
+func (d Denom) IsEmpty() bool {
+	return len(d) == 0
+}

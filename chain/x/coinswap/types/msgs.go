@@ -33,7 +33,7 @@ func (msg MsgExchange) ValidateBasic() error {
 	if ok := msg.Amount.IsPositive(); !ok {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidCoins, "amount: %s", msg.Amount)
 	}
-	if ok := ValidExchangeDenom(msg.From, msg.To); !ok {
+	if ok := !msg.From.IsEmpty() && !msg.To.IsEmpty(); !ok {
 		return sdkerrors.Wrapf(ErrInvalidExchangeDenom, "denominations: %s:%s", msg.From, msg.To)
 	}
 	if !msg.From.Equal(types.Denom(msg.Amount.Denom)) {
