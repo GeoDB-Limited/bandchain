@@ -224,6 +224,7 @@ func queryPendingRequests(ctx sdk.Context, path []string, k Keeper) ([]byte, err
 	return commontypes.QueryOK(types.ModuleCdc, pendingIDs)
 }
 
+// TODO: refactor to k.cdc
 func queryDataProvidersPool(ctx sdk.Context, k Keeper) ([]byte, error) {
 	return commontypes.QueryOK(types.ModuleCdc, k.GetOraclePool(ctx).DataProvidersPool)
 }

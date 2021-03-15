@@ -132,7 +132,7 @@ func TestFailActivateTooSoon(t *testing.T) {
 	// Set validator to be inactive just now.
 	k.SetValidatorStatus(ctx, testapp.Validator1.ValAddress, types.NewValidatorStatus(false, now))
 	// You can't activate until it's been at least InactivePenaltyDuration nanosec.
-	penaltyDuration := k.GetParam(ctx, types.KeyInactivePenaltyDuration)
+	penaltyDuration := k.GetParamUint64(ctx, types.KeyInactivePenaltyDuration)
 	require.Error(t, k.Activate(ctx.WithBlockTime(now), testapp.Validator1.ValAddress))
 	require.Error(t, k.Activate(ctx.WithBlockTime(now.Add(time.Duration(penaltyDuration/2))), testapp.Validator1.ValAddress))
 	// So far there must be no changes to the validator's status.

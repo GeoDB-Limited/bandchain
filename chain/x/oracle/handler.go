@@ -139,6 +139,7 @@ func handleMsgRequestData(ctx sdk.Context, k Keeper, m MsgRequestData) (*sdk.Res
 	return &sdk.Result{Events: ctx.EventManager().Events()}, nil
 }
 
+// TODO: change the gas price calculation in yoda
 func handleMsgReportData(ctx sdk.Context, k Keeper, m MsgReportData) (*sdk.Result, error) {
 	if !k.IsReporter(ctx, m.Validator, m.Reporter) {
 		return nil, types.ErrReporterNotAuthorized
@@ -152,27 +153,26 @@ func handleMsgReportData(ctx sdk.Context, k Keeper, m MsgReportData) (*sdk.Resul
 		return nil, err
 	}
 
-	// at this moment we are sure, that all the raw reports here are validated
-	// so we can distribute the reward for them in end-block
-	rawReportsMap := make(map[types.ExternalID]types.RawReport)
-	for _, rawRep := range m.GetRawReports() {
-		rawReportsMap[rawRep.ExternalID] = rawRep
-	}
-
 	req := k.MustGetRequest(ctx, m.RequestID)
-	dataProviderRewardPerByte := k.GetDataProviderRewardPerByteParam(ctx)
-	for _, rawReq := range req.GetRawRequests() {
-		rawRep, ok := rawReportsMap[rawReq.GetExternalID()]
-		if !ok {
-			// this request had no report
-			continue
+	if k.GetReportCount(ctx, m.RequestID) == req.MinCount {
+		// at this moment we are sure, that all the raw reports here are validated
+		// so we can distribute the reward for them in end-block
+		rawReportsMap := make(map[types.ExternalID]types.RawReport)
+		for _, rawRep := range m.GetRawReports() {
+			rawReportsMap[rawRep.ExternalID] = rawRep
 		}
 
-		ds := k.MustGetDataSource(ctx, rawReq.GetDataSourceID())
-		k.SetDataProviderAccumulatedReward(ctx, ds.Owner, utils.CalculateReward(rawRep.Data, dataProviderRewardPerByte.Value()))
-	}
+		dataProviderRewardPerByte := k.GetDataProviderRewardPerByteParam(ctx)
+		for _, rawReq := range req.GetRawRequests() {
+			rawRep, ok := rawReportsMap[rawReq.GetExternalID()]
+			if !ok {
+				// this request had no report
+				continue
+			}
 
-	if k.GetReportCount(ctx, m.RequestID) == req.MinCount {
+			ds := k.MustGetDataSource(ctx, rawReq.GetDataSourceID())
+			k.SetDataProviderAccumulatedReward(ctx, ds.Owner, utils.CalculateReward(rawRep.Data, dataProviderRewardPerByte.Value()))
+		}
 		// At the exact moment when the number of reports is sufficient, we add the request to
 		// the pending resolve list. This can happen at most one time for any request.
 		k.AddPendingRequest(ctx, m.RequestID)

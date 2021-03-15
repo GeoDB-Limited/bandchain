@@ -13,19 +13,21 @@ const (
 	DefaultParamspace = ModuleName
 	// Each value below is the default value for each parameter when generating the default
 	// genesis file. See comments in types.proto for explanation for each parameter.
-	DefaultMaxRawRequestCount      = uint64(12)
-	DefaultMaxAskCount             = uint64(16)
-	DefaultExpirationBlockCount    = uint64(100)
-	DefaultBaseRequestGas          = uint64(150000)
-	DefaultPerValidatorRequestGas  = uint64(30000)
-	DefaultSamplingTryCount        = uint64(3)
-	DefaultOracleRewardPercentage  = uint64(70)
-	DefaultInactivePenaltyDuration = uint64(10 * time.Minute)
-	DefaultDataProviderRewardDenom = "geo"
+	DefaultMaxRawRequestCount         = uint64(12)
+	DefaultMaxAskCount                = uint64(16)
+	DefaultExpirationBlockCount       = uint64(100)
+	DefaultBaseRequestGas             = uint64(150000)
+	DefaultPerValidatorRequestGas     = uint64(30000)
+	DefaultSamplingTryCount           = uint64(3)
+	DefaultOracleRewardPercentage     = uint64(70)
+	DefaultInactivePenaltyDuration    = uint64(10 * time.Minute)
+	DefaultDataProviderRewardDenom    = "geo"
+	DefaultDataRequesterBasicFeeDenom = "odin"
 )
 
 var (
 	DefaultDataProviderRewardPerByte = NewCoinDecProto(DefaultDataProviderRewardDenom)
+	DefaultDataRequesterBasicFee     = NewCoinProto(DefaultDataRequesterBasicFeeDenom)
 )
 
 // nolint
@@ -41,6 +43,7 @@ var (
 	KeyOracleRewardPercentage    = []byte("OracleRewardPercentage")
 	KeyInactivePenaltyDuration   = []byte("InactivePenaltyDuration")
 	KeyDataProviderRewardPerByte = []byte("DataProviderRewardPerByte")
+	KeyDataRequesterBasicFee     = []byte("DataRequesterBasicFee")
 )
 
 // String implements the stringer interface for Params.
@@ -54,6 +57,8 @@ func (p Params) String() string {
   SamplingTryCount:        %d
   OracleRewardPercentage:  %d
   InactivePenaltyDuration: %d
+  DataProviderRewardPerByte: %s
+  DataRequesterBasicFee: %s
 `,
 		p.MaxRawRequestCount,
 		p.MaxAskCount,
@@ -63,6 +68,8 @@ func (p Params) String() string {
 		p.SamplingTryCount,
 		p.OracleRewardPercentage,
 		p.InactivePenaltyDuration,
+		p.DataProviderRewardPerByte,
+		p.DataRequesterBasicFee,
 	)
 }
 
@@ -78,6 +85,7 @@ func (p *Params) ParamSetPairs() params.ParamSetPairs {
 		params.NewParamSetPair(KeyOracleRewardPercentage, &p.OracleRewardPercentage, validateUint64("oracle reward percentage", false)),
 		params.NewParamSetPair(KeyInactivePenaltyDuration, &p.InactivePenaltyDuration, validateUint64("inactive penalty duration", false)),
 		params.NewParamSetPair(KeyDataProviderRewardPerByte, &p.DataProviderRewardPerByte, validateDataProviderRewardPerByte),
+		params.NewParamSetPair(KeyDataRequesterBasicFee, &p.DataRequesterBasicFee, validateDataRequesterFee),
 	}
 }
 
@@ -93,6 +101,7 @@ func DefaultParams() Params {
 		DefaultOracleRewardPercentage,
 		DefaultInactivePenaltyDuration,
 		DefaultDataProviderRewardPerByte,
+		DefaultDataRequesterBasicFee,
 	)
 }
 
@@ -117,6 +126,18 @@ func validateDataProviderRewardPerByte(i interface{}) error {
 
 	if v.Amount.IsNegative() {
 		return fmt.Errorf("data provider reward must be positive: %v", v)
+	}
+	return nil
+}
+
+func validateDataRequesterFee(i interface{}) error {
+	v, ok := i.(CoinProto)
+	if !ok {
+		return fmt.Errorf("invalid parameter type: %T", i)
+	}
+
+	if v.Amount.IsNegative() {
+		return fmt.Errorf("data requester fee must be positive: %v", v)
 	}
 	return nil
 }

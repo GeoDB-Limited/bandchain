@@ -272,4 +272,5 @@ message Params {
   uint64 inactive_penalty_duration = 8;
 
   cosmos_sdk.v1.DecCoin data_provider_reward_per_byte = 9 [(gogoproto.customtype) = "CoinDecProto", (gogoproto.nullable) = false];
+  cosmos_sdk.v1.Coin data_requester_basic_fee = 10 [(gogoproto.customtype) = "CoinProto", (gogoproto.nullable) = false];
 }

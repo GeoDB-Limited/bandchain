@@ -286,6 +286,7 @@ func NewParams(
 	OracleRewardPercentage uint64,
 	InactivePenaltyDuration uint64,
 	DataProviderRewardPerByte CoinDecProto,
+	DataRequesterBasicFee CoinProto,
 ) Params {
 	return Params{
 		MaxRawRequestCount:        MaxRawRequestCount,
@@ -297,5 +298,6 @@ func NewParams(
 		OracleRewardPercentage:    OracleRewardPercentage,
 		InactivePenaltyDuration:   InactivePenaltyDuration,
 		DataProviderRewardPerByte: DataProviderRewardPerByte,
+		DataRequesterBasicFee:     DataRequesterBasicFee,
 	}
 }

@@ -186,10 +186,10 @@ func NewBandApp(
 	// DistrKeeper must be set afterward due to the circular reference between supply-staking-distr.
 	wrappedSupplyKeeper.SetDistrKeeper(&app.DistrKeeper)
 	wrappedSupplyKeeper.SetMintKeeper(&app.MintKeeper)
-	app.CrisisKeeper = crisis.NewKeeper(crisisSubspace, invCheckPeriod, app.SupplyKeeper, auth.FeeCollectorName)
+	app.CrisisKeeper = crisis.NewKeeper(crisisSubspace, invCheckPeriod, wrappedSupplyKeeper, auth.FeeCollectorName)
 	app.SlashingKeeper = slashing.NewKeeper(cdc, keys[slashing.StoreKey], &stakingKeeper, slashingSubspace)
 	app.UpgradeKeeper = upgrade.NewKeeper(skipUpgradeHeights, keys[upgrade.StoreKey], cdc)
-	app.OracleKeeper = oracle.NewKeeper(cdc, keys[oracle.StoreKey], filepath.Join(viper.GetString(cli.HomeFlag), "files"), auth.FeeCollectorName, oracleSubspace, app.SupplyKeeper, &stakingKeeper, app.DistrKeeper)
+	app.OracleKeeper = oracle.NewKeeper(cdc, keys[oracle.StoreKey], filepath.Join(viper.GetString(cli.HomeFlag), "files"), auth.FeeCollectorName, oracleSubspace, wrappedSupplyKeeper, &stakingKeeper, app.DistrKeeper)
 	app.CoinswapKeeper = coinswap.NewKeeper(cdc, keys[coinswap.StoreKey], coinswapSubspace, wrappedSupplyKeeper, app.DistrKeeper, app.OracleKeeper)
 	// Register the proposal types.
 	govRouter := gov.NewRouter()
