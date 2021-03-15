@@ -3,7 +3,7 @@ package proof
 import (
 	"encoding/json"
 	"fmt"
-	rest2 "github.com/GeoDB-Limited/odincore/chain/x/common/client/rest"
+	commonrest "github.com/GeoDB-Limited/odincore/chain/x/common/client/rest"
 	commontypes "github.com/GeoDB-Limited/odincore/chain/x/common/types"
 	"math/big"
 	"net/http"
@@ -132,7 +132,7 @@ func GetProofHandlerFn(cliCtx context.CLIContext, route string) http.HandlerFunc
 			return
 		}
 		if qResult.Status != http.StatusOK {
-			rest2.PostProcessQueryResponse(w, ctx, bz)
+			commonrest.PostProcessQueryResponse(w, ctx, bz)
 			return
 		}
 		var request types.QueryRequestResult
@@ -314,7 +314,7 @@ func GetMutiProofHandlerFn(cliCtx context.CLIContext, route string) http.Handler
 				return
 			}
 			if qResult.Status != http.StatusOK {
-				rest2.PostProcessQueryResponse(w, ctx, bz)
+				commonrest.PostProcessQueryResponse(w, ctx, bz)
 				return
 			}
 			var request types.QueryRequestResult
