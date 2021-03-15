@@ -80,11 +80,11 @@ func (k Keeper) PrepareRequest(ctx sdk.Context, r types.RequestSpec) error {
 		return types.ErrEmptyRawRequests
 	}
 	// We now have everything we need to the request, so let's add it to the store.
-	id := k.AddRequest(ctx, req)
+	rid := k.AddRequest(ctx, req)
 	// Emit an event describing a data request and asked validators.
 	event := sdk.NewEvent(types.EventTypeRequest)
 	event = event.AppendAttributes(
-		sdk.NewAttribute(types.AttributeKeyID, fmt.Sprintf("%d", id)),
+		sdk.NewAttribute(types.AttributeKeyID, fmt.Sprintf("%d", rid)),
 		sdk.NewAttribute(types.AttributeKeyClientID, req.ClientID),
 		sdk.NewAttribute(types.AttributeKeyOracleScriptID, fmt.Sprintf("%d", req.OracleScriptID)),
 		sdk.NewAttribute(types.AttributeKeyCalldata, hex.EncodeToString(req.Calldata)),
@@ -96,7 +96,7 @@ func (k Keeper) PrepareRequest(ctx sdk.Context, r types.RequestSpec) error {
 		event = event.AppendAttributes(sdk.NewAttribute(types.AttributeKeyValidator, val.String()))
 	}
 	ctx.EventManager().EmitEvent(event)
-	// Emit an event for each of the raw data requests.
+	// Emit an event for each of the raw data requests
 	for _, rawReq := range env.GetRawRequests() {
 		ds, err := k.GetDataSource(ctx, rawReq.DataSourceID)
 		if err != nil {

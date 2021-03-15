@@ -63,6 +63,7 @@ func ParamKeyTable() params.KeyTable {
 	return params.NewKeyTable().RegisterParamSet(&types.Params{})
 }
 
+// todo may be dangerous to keep, as far as we have not only uint params
 // GetParam returns the parameter as specified by key as an uint64.
 func (k Keeper) GetParam(ctx sdk.Context, key []byte) (res uint64) {
 	k.paramSpace.Get(ctx, key, &res)
@@ -70,14 +71,19 @@ func (k Keeper) GetParam(ctx sdk.Context, key []byte) (res uint64) {
 }
 
 // SetParam saves the given key-value parameter to the store.
-func (k Keeper) SetParam(ctx sdk.Context, key []byte, value uint64) {
-	k.paramSpace.Set(ctx, key, value)
+func (k Keeper) SetParams(ctx sdk.Context, value types.Params) {
+	k.paramSpace.SetParamSet(ctx, &value)
 }
 
 // GetParams returns all current parameters as a types.Params instance.
 func (k Keeper) GetParams(ctx sdk.Context) (params types.Params) {
 	k.paramSpace.GetParamSet(ctx, &params)
 	return params
+}
+
+func (k Keeper) GetDataProviderRewardPerByteParam(ctx sdk.Context) (res types.CoinDecProto) {
+	k.paramSpace.Get(ctx, types.KeyDataProviderRewardPerByte, &res)
+	return res
 }
 
 // SetRollingSeed sets the rolling seed value to be provided value.

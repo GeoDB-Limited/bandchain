@@ -1,15 +1,14 @@
 package cli
 
 import (
-	"encoding/json"
 	"fmt"
 	"github.com/GeoDB-Limited/odincore/chain/x/coinswap/types"
+	"github.com/GeoDB-Limited/odincore/chain/x/common/client/cli"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/spf13/cobra"
-	"net/http"
 )
 
 // GetQueryCmd returns the cli query commands for this module.
@@ -28,18 +27,6 @@ func GetQueryCmd(storeKey string, cdc *codec.Codec) *cobra.Command {
 	return coinswapCmd
 }
 
-func printOutput(cliCtx context.CLIContext, cdc *codec.Codec, bz []byte, out interface{}) error {
-	var result types.QueryResult
-	if err := json.Unmarshal(bz, &result); err != nil {
-		return err
-	}
-	if result.Status != http.StatusOK {
-		return cliCtx.PrintOutput(result.Result)
-	}
-	cdc.MustUnmarshalJSON(result.Result, out)
-	return cliCtx.PrintOutput(out)
-}
-
 // GetQueryCmdParams implements the query parameters command.
 func GetQueryCmdParams(route string, cdc *codec.Codec) *cobra.Command {
 	return &cobra.Command{
@@ -51,7 +38,7 @@ func GetQueryCmdParams(route string, cdc *codec.Codec) *cobra.Command {
 			if err != nil {
 				return err
 			}
-			return printOutput(cliCtx, cdc, bz, &types.Params{})
+			return cli.PrintOutput(cliCtx, cdc, bz, &types.Params{})
 		},
 	}
 }
@@ -66,7 +53,7 @@ func GetQueryCmdRate(route string, cdc *codec.Codec) *cobra.Command {
 			if err != nil {
 				return err
 			}
-			return printOutput(cliCtx, cdc, bz, &types.QueryRateResult{})
+			return cli.PrintOutput(cliCtx, cdc, bz, &types.QueryRateResult{})
 		},
 	}
 }

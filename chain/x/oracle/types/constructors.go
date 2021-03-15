@@ -285,15 +285,17 @@ func NewParams(
 	SamplingTryCount uint64,
 	OracleRewardPercentage uint64,
 	InactivePenaltyDuration uint64,
+	DataProviderRewardPerByte CoinDecProto,
 ) Params {
 	return Params{
-		MaxRawRequestCount:      MaxRawRequestCount,
-		MaxAskCount:             MaxAskCount,
-		ExpirationBlockCount:    ExpirationBlockCount,
-		BaseRequestGas:          BaseRequestGas,
-		PerValidatorRequestGas:  PerValidatorRequestGas,
-		SamplingTryCount:        SamplingTryCount,
-		OracleRewardPercentage:  OracleRewardPercentage,
-		InactivePenaltyDuration: InactivePenaltyDuration,
+		MaxRawRequestCount:        MaxRawRequestCount,
+		MaxAskCount:               MaxAskCount,
+		ExpirationBlockCount:      ExpirationBlockCount,
+		BaseRequestGas:            BaseRequestGas,
+		PerValidatorRequestGas:    PerValidatorRequestGas,
+		SamplingTryCount:          SamplingTryCount,
+		OracleRewardPercentage:    OracleRewardPercentage,
+		InactivePenaltyDuration:   InactivePenaltyDuration,
+		DataProviderRewardPerByte: DataProviderRewardPerByte,
 	}
 }

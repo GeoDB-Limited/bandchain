@@ -3,6 +3,7 @@ package common
 import (
 	"encoding/json"
 	"fmt"
+	commontypes "github.com/GeoDB-Limited/odincore/chain/x/common/types"
 
 	"github.com/cosmos/cosmos-sdk/client/context"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -12,7 +13,7 @@ import (
 )
 
 func getData(cliCtx context.CLIContext, bz []byte, ptr interface{}) error {
-	var result types.QueryResult
+	var result commontypes.QueryResult
 	if err := json.Unmarshal(bz, &result); err != nil {
 		return err
 	}
@@ -166,7 +167,7 @@ func VerifyRequest(
 	if request.Request.RequestHeight+int64(params.ExpirationBlockCount) < height {
 		return nil, 0, fmt.Errorf("Request #%d is already expired", requestID)
 	}
-	bz, err := types.QueryOK(VerificationResult{
+	bz, err := commontypes.QueryOK(types.ModuleCdc, VerificationResult{
 		ChainID:      chainID,
 		Validator:    validator,
 		RequestID:    requestID,

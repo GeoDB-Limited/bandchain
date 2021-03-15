@@ -1,10 +1,9 @@
 package cli
 
 import (
-	"encoding/json"
 	"fmt"
+	"github.com/GeoDB-Limited/odincore/chain/x/common/client/cli"
 	"github.com/cosmos/cosmos-sdk/version"
-	"net/http"
 	"strings"
 
 	"github.com/cosmos/cosmos-sdk/client"
@@ -43,18 +42,6 @@ func GetQueryCmd(storeKey string, cdc *codec.Codec) *cobra.Command {
 	return oracleCmd
 }
 
-func printOutput(cliCtx context.CLIContext, cdc *codec.Codec, bz []byte, out interface{}) error {
-	var result types.QueryResult
-	if err := json.Unmarshal(bz, &result); err != nil {
-		return err
-	}
-	if result.Status != http.StatusOK {
-		return cliCtx.PrintOutput(result.Result)
-	}
-	cdc.MustUnmarshalJSON(result.Result, out)
-	return cliCtx.PrintOutput(out)
-}
-
 // GetQueryCmdParams implements the query parameters command.
 func GetQueryCmdParams(route string, cdc *codec.Codec) *cobra.Command {
 	return &cobra.Command{
@@ -66,7 +53,7 @@ func GetQueryCmdParams(route string, cdc *codec.Codec) *cobra.Command {
 			if err != nil {
 				return err
 			}
-			return printOutput(cliCtx, cdc, bz, &types.Params{})
+			return cli.PrintOutput(cliCtx, cdc, bz, &types.Params{})
 		},
 	}
 }
@@ -82,7 +69,7 @@ func GetQueryCmdCounts(route string, cdc *codec.Codec) *cobra.Command {
 			if err != nil {
 				return err
 			}
-			return printOutput(cliCtx, cdc, bz, &types.QueryCountsResult{})
+			return cli.PrintOutput(cliCtx, cdc, bz, &types.QueryCountsResult{})
 		},
 	}
 }
@@ -98,7 +85,7 @@ func GetQueryCmdDataSource(route string, cdc *codec.Codec) *cobra.Command {
 			if err != nil {
 				return err
 			}
-			return printOutput(cliCtx, cdc, bz, &types.DataSource{})
+			return cli.PrintOutput(cliCtx, cdc, bz, &types.DataSource{})
 		},
 	}
 }
@@ -114,7 +101,7 @@ func GetQueryCmdOracleScript(route string, cdc *codec.Codec) *cobra.Command {
 			if err != nil {
 				return err
 			}
-			return printOutput(cliCtx, cdc, bz, &types.OracleScript{})
+			return cli.PrintOutput(cliCtx, cdc, bz, &types.OracleScript{})
 		},
 	}
 }
@@ -130,7 +117,7 @@ func GetQueryCmdRequest(route string, cdc *codec.Codec) *cobra.Command {
 			if err != nil {
 				return err
 			}
-			return printOutput(cliCtx, cdc, bz, &types.QueryRequestResult{})
+			return cli.PrintOutput(cliCtx, cdc, bz, &types.QueryRequestResult{})
 		},
 	}
 }
@@ -146,7 +133,7 @@ func GetQueryCmdRequestSearch(route string, cdc *codec.Codec) *cobra.Command {
 			if err != nil {
 				return err
 			}
-			return printOutput(cliCtx, cdc, bz, &types.QueryRequestResult{})
+			return cli.PrintOutput(cliCtx, cdc, bz, &types.QueryRequestResult{})
 		},
 	}
 }
@@ -162,7 +149,7 @@ func GetQueryCmdValidatorStatus(route string, cdc *codec.Codec) *cobra.Command {
 			if err != nil {
 				return err
 			}
-			return printOutput(cliCtx, cdc, bz, &types.ValidatorStatus{})
+			return cli.PrintOutput(cliCtx, cdc, bz, &types.ValidatorStatus{})
 		},
 	}
 }
@@ -178,7 +165,7 @@ func GetQueryCmdReporters(route string, cdc *codec.Codec) *cobra.Command {
 			if err != nil {
 				return err
 			}
-			return printOutput(cliCtx, cdc, bz, &[]sdk.AccAddress{})
+			return cli.PrintOutput(cliCtx, cdc, bz, &[]sdk.AccAddress{})
 		},
 	}
 }
@@ -194,7 +181,7 @@ func GetQueryActiveValidators(route string, cdc *codec.Codec) *cobra.Command {
 			if err != nil {
 				return err
 			}
-			return printOutput(cliCtx, cdc, bz, &[]types.QueryActiveValidatorResult{})
+			return cli.PrintOutput(cliCtx, cdc, bz, &[]types.QueryActiveValidatorResult{})
 		},
 	}
 }
@@ -217,7 +204,7 @@ func GetQueryPendingRequests(route string, cdc *codec.Codec) *cobra.Command {
 				return err
 			}
 
-			return printOutput(cliCtx, cdc, bz, &[]types.RequestID{})
+			return cli.PrintOutput(cliCtx, cdc, bz, &[]types.RequestID{})
 		},
 	}
 }
@@ -244,7 +231,7 @@ $ %s query oracle data-providers-pool
 			if err != nil {
 				return err
 			}
-			return printOutput(cliCtx, cdc, bz, &[]sdk.DecCoin{})
+			return cli.PrintOutput(cliCtx, cdc, bz, &[]sdk.DecCoin{})
 		},
 	}
 }

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	commontypes "github.com/GeoDB-Limited/odincore/chain/x/common/types"
 	"path/filepath"
 	"sync"
 	"time"
@@ -23,6 +24,7 @@ import (
 	"github.com/GeoDB-Limited/odincore/chain/yoda/executor"
 )
 
+// TODO: refactor yoda to more consistent errors
 const (
 	// TODO: We can subscribe only for txs that contain request messages
 	TxQuery = "tm.event = 'Tx'"
@@ -59,7 +61,7 @@ func runImpl(c *Context, l *Logger) error {
 		return err
 	}
 
-	var result types.QueryResult
+	var result commontypes.QueryResult
 	if err := json.Unmarshal(rawPendingRequests.Response.GetValue(), &result); err != nil {
 		return err
 	}

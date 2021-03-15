@@ -39,8 +39,10 @@ message IntProto {
 
 // DecProto defines a Protobuf wrapper around a Dec object.
 message DecProto {
+  option (gogoproto.stringer) = true;
+
   string dec = 1
-      [ (gogoproto.customtype) = "Dec", (gogoproto.nullable) = false ];
+      [ (gogoproto.casttype) = "Dec"];
 }
 
 // ValAddresses defines a repeated set of validator addresses.

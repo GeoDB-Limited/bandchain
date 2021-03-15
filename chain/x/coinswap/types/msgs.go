@@ -1,6 +1,7 @@
 package types
 
 import (
+	"github.com/GeoDB-Limited/odincore/chain/x/common/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
@@ -9,8 +10,8 @@ import (
 const RouterKey = ModuleName
 
 type MsgExchange struct {
-	From      Denom          `json:"from"`
-	To        Denom          `json:"to"`
+	From      types.Denom    `json:"from"`
+	To        types.Denom    `json:"to"`
 	Amount    sdk.Coin       `json:"amount"`    // amount of coins to change
 	Requester sdk.AccAddress `json:"requester"` // address output coin is being sent to
 }
@@ -32,10 +33,10 @@ func (msg MsgExchange) ValidateBasic() error {
 	if ok := msg.Amount.IsPositive(); !ok {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidCoins, "amount: %s", msg.Amount)
 	}
-	if ok := ValidExchangeDenom(msg.From, msg.To); !ok {
+	if ok := !msg.From.IsEmpty() && !msg.To.IsEmpty(); !ok {
 		return sdkerrors.Wrapf(ErrInvalidExchangeDenom, "denominations: %s:%s", msg.From, msg.To)
 	}
-	if !msg.From.Equal(Denom(msg.Amount.Denom)) {
+	if !msg.From.Equal(types.Denom(msg.Amount.Denom)) {
 		return sdkerrors.Wrapf(ErrExchangeDenomMissmatch, "denominations: %s:%s", msg.From, msg.To)
 	}
 	return nil

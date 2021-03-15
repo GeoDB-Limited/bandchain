@@ -8,7 +8,7 @@ import (
 	abci "github.com/tendermint/tendermint/abci/types"
 )
 
-// GenesisState is the oracle state that must be provided at genesis.
+// GenesisState is the coinswap state that must be provided at genesis.
 type GenesisState struct {
 	InitialRate sdk.Dec      `json:"initial_rate" yaml:"initial_rate"`
 	Params      types.Params `json:"params" yaml:"params"`

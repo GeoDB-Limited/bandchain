@@ -2,9 +2,9 @@ package oracle
 
 import (
 	"fmt"
-
 	"github.com/GeoDB-Limited/odincore/chain/pkg/gzip"
 	"github.com/GeoDB-Limited/odincore/chain/x/oracle/types"
+	"github.com/GeoDB-Limited/odincore/chain/x/oracle/utils"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
@@ -146,11 +146,32 @@ func handleMsgReportData(ctx sdk.Context, k Keeper, m MsgReportData) (*sdk.Resul
 	if m.RequestID <= k.GetRequestLastExpired(ctx) {
 		return nil, types.ErrRequestAlreadyExpired
 	}
+
 	err := k.AddReport(ctx, m.RequestID, types.NewReport(m.Validator, !k.HasResult(ctx, m.RequestID), m.RawReports))
 	if err != nil {
 		return nil, err
 	}
+
+	// at this moment we are sure, that all the raw reports here are validated
+	// so we can distribute the reward for them in end-block
+	rawReportsMap := make(map[types.ExternalID]types.RawReport)
+	for _, rawRep := range m.GetRawReports() {
+		rawReportsMap[rawRep.ExternalID] = rawRep
+	}
+
 	req := k.MustGetRequest(ctx, m.RequestID)
+	dataProviderRewardPerByte := k.GetDataProviderRewardPerByteParam(ctx)
+	for _, rawReq := range req.GetRawRequests() {
+		rawRep, ok := rawReportsMap[rawReq.GetExternalID()]
+		if !ok {
+			// this request had no report
+			continue
+		}
+
+		ds := k.MustGetDataSource(ctx, rawReq.GetDataSourceID())
+		k.SetDataProviderAccumulatedReward(ctx, ds.Owner, utils.CalculateReward(rawRep.Data, dataProviderRewardPerByte.Value()))
+	}
+
 	if k.GetReportCount(ctx, m.RequestID) == req.MinCount {
 		// At the exact moment when the number of reports is sufficient, we add the request to
 		// the pending resolve list. This can happen at most one time for any request.

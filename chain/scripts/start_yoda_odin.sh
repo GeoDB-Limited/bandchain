@@ -24,22 +24,13 @@ yoda config node $2
 
 echo "y" | bandcli tx oracle activate --from $1 --keyring-backend test --broadcast-mode block --node $2
 
-# wait for activation transaction success
-sleep 10
-
 yoda keys add reporter
 
 # send band tokens to reporters
 echo "y" | bandcli tx multi-send 1000000loki $(yoda keys list -a) --from $1 --keyring-backend test --broadcast-mode block --node $2
 
-# wait for sending band tokens transaction success
-sleep 10
-
 # add reporter to bandchain
 echo "y" | bandcli tx oracle add-reporters $(yoda keys list -a) --from $1 --keyring-backend test --broadcast-mode block --node $2
-
-# wait for addding reporter transaction success
-sleep 10
 
 # run yoda
 yoda run

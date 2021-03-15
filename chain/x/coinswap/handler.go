@@ -20,6 +20,10 @@ func NewHandler(k Keeper) sdk.Handler {
 }
 
 func handleMsgExchange(ctx sdk.Context, k Keeper, msg MsgExchange) (*sdk.Result, error) {
+	validExchanges := k.GetValidExchangesParam(ctx, types.KeyValidExchanges)
+	if !validExchanges.Contains(msg.From, msg.To) {
+		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "msg contains invalid denom exchange, from: %s, to: %s", msg.From, msg.To)
+	}
 	err := k.ExchangeDenom(ctx, msg.From, msg.To, msg.Amount, msg.Requester)
 	if err != nil {
 		return nil, err

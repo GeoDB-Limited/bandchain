@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	commontypes "github.com/GeoDB-Limited/odincore/chain/x/common/types"
 	"strconv"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -44,11 +45,11 @@ func NewQuerier(keeper Keeper) sdk.Querier {
 }
 
 func queryParameters(ctx sdk.Context, k Keeper) ([]byte, error) {
-	return types.QueryOK(k.GetParams(ctx))
+	return commontypes.QueryOK(types.ModuleCdc, k.GetParams(ctx))
 }
 
 func queryCounts(ctx sdk.Context, k Keeper) ([]byte, error) {
-	return types.QueryOK(types.QueryCountsResult{
+	return commontypes.QueryOK(types.ModuleCdc, types.QueryCountsResult{
 		DataSourceCount:   k.GetDataSourceCount(ctx),
 		OracleScriptCount: k.GetOracleScriptCount(ctx),
 		RequestCount:      k.GetRequestCount(ctx),
@@ -68,13 +69,13 @@ func queryDataSourceByID(ctx sdk.Context, path []string, k Keeper) ([]byte, erro
 	}
 	id, err := strconv.ParseInt(path[0], 10, 64)
 	if err != nil {
-		return types.QueryBadRequest(err.Error())
+		return commontypes.QueryBadRequest(types.ModuleCdc, err.Error())
 	}
 	dataSource, err := k.GetDataSource(ctx, types.DataSourceID(id))
 	if err != nil {
-		return types.QueryNotFound(err.Error())
+		return commontypes.QueryNotFound(types.ModuleCdc, err.Error())
 	}
-	return types.QueryOK(dataSource)
+	return commontypes.QueryOK(types.ModuleCdc, dataSource)
 }
 
 func queryOracleScriptByID(ctx sdk.Context, path []string, k Keeper) ([]byte, error) {
@@ -83,13 +84,13 @@ func queryOracleScriptByID(ctx sdk.Context, path []string, k Keeper) ([]byte, er
 	}
 	id, err := strconv.ParseInt(path[0], 10, 64)
 	if err != nil {
-		return types.QueryBadRequest(err.Error())
+		return commontypes.QueryBadRequest(types.ModuleCdc, err.Error())
 	}
 	oracleScript, err := k.GetOracleScript(ctx, types.OracleScriptID(id))
 	if err != nil {
-		return types.QueryNotFound(err.Error())
+		return commontypes.QueryNotFound(types.ModuleCdc, err.Error())
 	}
-	return types.QueryOK(oracleScript)
+	return commontypes.QueryOK(types.ModuleCdc, oracleScript)
 }
 
 func queryRequestByID(ctx sdk.Context, path []string, k Keeper) ([]byte, error) {
@@ -98,22 +99,22 @@ func queryRequestByID(ctx sdk.Context, path []string, k Keeper) ([]byte, error) 
 	}
 	id, err := strconv.ParseInt(path[0], 10, 64)
 	if err != nil {
-		return types.QueryBadRequest(err.Error())
+		return commontypes.QueryBadRequest(types.ModuleCdc, err.Error())
 	}
 	request, err := k.GetRequest(ctx, types.RequestID(id))
 	if err != nil {
-		return types.QueryNotFound(err.Error())
+		return commontypes.QueryNotFound(types.ModuleCdc, err.Error())
 	}
 	reports := k.GetReports(ctx, types.RequestID(id))
 	if !k.HasResult(ctx, types.RequestID(id)) {
-		return types.QueryOK(types.QueryRequestResult{
+		return commontypes.QueryOK(types.ModuleCdc, types.QueryRequestResult{
 			Request: request,
 			Reports: reports,
 			Result:  nil,
 		})
 	}
 	result := k.MustGetResult(ctx, types.RequestID(id))
-	return types.QueryOK(types.QueryRequestResult{
+	return commontypes.QueryOK(types.ModuleCdc, types.QueryRequestResult{
 		Request: request,
 		Reports: reports,
 		Result:  &result,
@@ -126,9 +127,9 @@ func queryValidatorStatus(ctx sdk.Context, path []string, k Keeper) ([]byte, err
 	}
 	validatorAddress, err := sdk.ValAddressFromBech32(path[0])
 	if err != nil {
-		return types.QueryBadRequest(err.Error())
+		return commontypes.QueryBadRequest(types.ModuleCdc, err.Error())
 	}
-	return types.QueryOK(k.GetValidatorStatus(ctx, validatorAddress))
+	return commontypes.QueryOK(types.ModuleCdc, k.GetValidatorStatus(ctx, validatorAddress))
 }
 
 func queryReporters(ctx sdk.Context, path []string, k Keeper) ([]byte, error) {
@@ -137,9 +138,9 @@ func queryReporters(ctx sdk.Context, path []string, k Keeper) ([]byte, error) {
 	}
 	validatorAddress, err := sdk.ValAddressFromBech32(path[0])
 	if err != nil {
-		return types.QueryBadRequest(err.Error())
+		return commontypes.QueryBadRequest(types.ModuleCdc, err.Error())
 	}
-	return types.QueryOK(k.GetReporters(ctx, validatorAddress))
+	return commontypes.QueryOK(types.ModuleCdc, k.GetReporters(ctx, validatorAddress))
 }
 
 func queryActiveValidators(ctx sdk.Context, k Keeper) ([]byte, error) {
@@ -154,12 +155,12 @@ func queryActiveValidators(ctx sdk.Context, k Keeper) ([]byte, error) {
 			}
 			return false
 		})
-	return types.QueryOK(vals)
+	return commontypes.QueryOK(types.ModuleCdc, vals)
 }
 
 func queryPendingRequests(ctx sdk.Context, path []string, k Keeper) ([]byte, error) {
 	if len(path) > 1 {
-		return types.QueryBadRequest("too many arguments")
+		return commontypes.QueryBadRequest(types.ModuleCdc, "too many arguments")
 	}
 
 	var valAddress *sdk.ValAddress
@@ -167,7 +168,7 @@ func queryPendingRequests(ctx sdk.Context, path []string, k Keeper) ([]byte, err
 		valAddress = new(sdk.ValAddress)
 		address, err := sdk.ValAddressFromBech32(path[0])
 		if err != nil {
-			return types.QueryBadRequest(err.Error())
+			return commontypes.QueryBadRequest(types.ModuleCdc, err.Error())
 		}
 
 		*valAddress = address
@@ -220,9 +221,9 @@ func queryPendingRequests(ctx sdk.Context, path []string, k Keeper) ([]byte, err
 		pendingIDs = append(pendingIDs, id)
 	}
 
-	return types.QueryOK(pendingIDs)
+	return commontypes.QueryOK(types.ModuleCdc, pendingIDs)
 }
 
 func queryDataProvidersPool(ctx sdk.Context, k Keeper) ([]byte, error) {
-	return types.QueryOK(k.GetOraclePool(ctx).DataProvidersPool)
+	return commontypes.QueryOK(types.ModuleCdc, k.GetOraclePool(ctx).DataProvidersPool)
 }

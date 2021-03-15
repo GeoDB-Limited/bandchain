@@ -55,3 +55,6 @@ We highly encourage participation from the community to help with D3N developmen
 
 [monorepo]: https://en.wikipedia.org/wiki/Monorepo
 [drop as a line]: mailto:connect@bandprotocol.com
+
+# Bugs detected:
+- no sort in fee pool denominations in distribution module, when read from gensis

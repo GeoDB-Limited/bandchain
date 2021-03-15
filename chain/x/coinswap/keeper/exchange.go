@@ -2,13 +2,14 @@ package keeper
 
 import (
 	"github.com/GeoDB-Limited/odincore/chain/x/coinswap/types"
+	commontypes "github.com/GeoDB-Limited/odincore/chain/x/common/types"
 	"github.com/GeoDB-Limited/odincore/chain/x/oracle"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	distr "github.com/cosmos/cosmos-sdk/x/distribution"
 )
 
-func (k Keeper) ExchangeDenom(ctx sdk.Context, from, to types.Denom, amt sdk.Coin, requester sdk.AccAddress) error {
+func (k Keeper) ExchangeDenom(ctx sdk.Context, from, to commontypes.Denom, amt sdk.Coin, requester sdk.AccAddress) error {
 
 	// convert source amount to destination amount according to rate
 	convertedAmt, err := k.convertToRate(ctx, from, to, amt)
@@ -61,7 +62,7 @@ func (k Keeper) GetRate(ctx sdk.Context) sdk.Dec {
 }
 
 // returns the converted amount according to current rate
-func (k Keeper) convertToRate(ctx sdk.Context, from, to types.Denom, amt sdk.Coin) (sdk.DecCoin, error) {
+func (k Keeper) convertToRate(ctx sdk.Context, from, to commontypes.Denom, amt sdk.Coin) (sdk.DecCoin, error) {
 	rate := k.GetRate(ctx)
 	if rate.GT(amt.Amount.ToDec()) {
 		return sdk.DecCoin{}, sdkerrors.Wrapf(sdkerrors.ErrInsufficientFunds, "current rate: %s is higher then amount provided: %s", rate.String(), amt.String())

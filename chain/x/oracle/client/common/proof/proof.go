@@ -3,6 +3,8 @@ package proof
 import (
 	"encoding/json"
 	"fmt"
+	commonrest "github.com/GeoDB-Limited/odincore/chain/x/common/client/rest"
+	commontypes "github.com/GeoDB-Limited/odincore/chain/x/common/types"
 	"math/big"
 	"net/http"
 	"strconv"
@@ -17,7 +19,6 @@ import (
 	rpcclient "github.com/tendermint/tendermint/rpc/client"
 
 	"github.com/GeoDB-Limited/odincore/chain/pkg/obi"
-	clientcmn "github.com/GeoDB-Limited/odincore/chain/x/oracle/client/common"
 	"github.com/GeoDB-Limited/odincore/chain/x/oracle/types"
 )
 
@@ -125,13 +126,13 @@ func GetProofHandlerFn(cliCtx context.CLIContext, route string) http.HandlerFunc
 			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
 			return
 		}
-		var qResult types.QueryResult
+		var qResult commontypes.QueryResult
 		if err := json.Unmarshal(bz, &qResult); err != nil {
 			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
 			return
 		}
 		if qResult.Status != http.StatusOK {
-			clientcmn.PostProcessQueryResponse(w, ctx, bz)
+			commonrest.PostProcessQueryResponse(w, ctx, bz)
 			return
 		}
 		var request types.QueryRequestResult
@@ -307,13 +308,13 @@ func GetMutiProofHandlerFn(cliCtx context.CLIContext, route string) http.Handler
 				rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
 				return
 			}
-			var qResult types.QueryResult
+			var qResult commontypes.QueryResult
 			if err := json.Unmarshal(bz, &qResult); err != nil {
 				rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
 				return
 			}
 			if qResult.Status != http.StatusOK {
-				clientcmn.PostProcessQueryResponse(w, ctx, bz)
+				commonrest.PostProcessQueryResponse(w, ctx, bz)
 				return
 			}
 			var request types.QueryRequestResult

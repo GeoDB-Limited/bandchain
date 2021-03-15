@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"github.com/GeoDB-Limited/odincore/chain/x/coinswap/types"
+	commontypes "github.com/GeoDB-Limited/odincore/chain/x/common/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	abci "github.com/tendermint/tendermint/abci/types"
@@ -21,13 +22,13 @@ func NewQuerier(keeper Keeper) sdk.Querier {
 }
 
 func queryParameters(ctx sdk.Context, k Keeper) ([]byte, error) {
-	return types.QueryOK(k.GetParams(ctx))
+	return commontypes.QueryOK(types.ModuleCdc, k.GetParams(ctx))
 }
 
 func queryRate(ctx sdk.Context, k Keeper) ([]byte, error) {
 	initialRate := k.GetInitialRate(ctx)
 	rateMultiplier := k.GetRateMultiplier(ctx)
-	return types.QueryOK(types.QueryRateResult{
+	return commontypes.QueryOK(types.ModuleCdc, types.QueryRateResult{
 		Rate:        initialRate.Mul(rateMultiplier),
 		InitialRate: initialRate,
 	})

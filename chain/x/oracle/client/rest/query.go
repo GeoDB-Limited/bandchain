@@ -3,6 +3,8 @@ package rest
 import (
 	"encoding/json"
 	"fmt"
+	commonrest "github.com/GeoDB-Limited/odincore/chain/x/common/client/rest"
+	commontypes "github.com/GeoDB-Limited/odincore/chain/x/common/types"
 	"net/http"
 	"strconv"
 
@@ -33,7 +35,7 @@ func getParamsHandler(cliCtx context.CLIContext, route string) http.HandlerFunc 
 			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
 			return
 		}
-		clientcmn.PostProcessQueryResponse(w, cliCtx.WithHeight(height), bz)
+		commonrest.PostProcessQueryResponse(w, cliCtx.WithHeight(height), bz)
 	}
 }
 
@@ -48,7 +50,7 @@ func getCountsHandler(cliCtx context.CLIContext, route string) http.HandlerFunc 
 			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
 			return
 		}
-		clientcmn.PostProcessQueryResponse(w, cliCtx.WithHeight(height), bz)
+		commonrest.PostProcessQueryResponse(w, cliCtx.WithHeight(height), bz)
 	}
 }
 
@@ -82,7 +84,7 @@ func getDataSourceByIDHandler(cliCtx context.CLIContext, route string) http.Hand
 			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
 			return
 		}
-		clientcmn.PostProcessQueryResponse(w, cliCtx.WithHeight(height), bz)
+		commonrest.PostProcessQueryResponse(w, cliCtx.WithHeight(height), bz)
 	}
 }
 
@@ -98,7 +100,7 @@ func getOracleScriptByIDHandler(cliCtx context.CLIContext, route string) http.Ha
 			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
 			return
 		}
-		clientcmn.PostProcessQueryResponse(w, cliCtx.WithHeight(height), bz)
+		commonrest.PostProcessQueryResponse(w, cliCtx.WithHeight(height), bz)
 	}
 }
 
@@ -114,7 +116,7 @@ func getRequestByIDHandler(cliCtx context.CLIContext, route string) http.Handler
 			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
 			return
 		}
-		clientcmn.PostProcessQueryResponse(w, cliCtx.WithHeight(height), bz)
+		commonrest.PostProcessQueryResponse(w, cliCtx.WithHeight(height), bz)
 	}
 }
 
@@ -132,7 +134,7 @@ func getRequestSearchHandler(cliCtx context.CLIContext, route string) http.Handl
 			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
 			return
 		}
-		clientcmn.PostProcessQueryResponse(w, cliCtx.WithHeight(height), bz)
+		commonrest.PostProcessQueryResponse(w, cliCtx.WithHeight(height), bz)
 	}
 }
 
@@ -164,12 +166,12 @@ func getRequestsPricesHandler(cliCtx context.CLIContext, route string) http.Hand
 			}
 			prices[idx] = price
 		}
-		bz, err := types.QueryOK(prices)
+		bz, err := commontypes.QueryOK(types.ModuleCdc, prices)
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
 			return
 		}
-		clientcmn.PostProcessQueryResponse(w, cliCtx.WithHeight(height), bz)
+		commonrest.PostProcessQueryResponse(w, cliCtx.WithHeight(height), bz)
 	}
 }
 
@@ -188,13 +190,13 @@ func getRequestsPriceSymbolsHandler(cliCtx context.CLIContext, route string) htt
 			return
 		}
 
-		bz, err = types.QueryOK(symbols)
+		bz, err = commontypes.QueryOK(types.ModuleCdc, symbols)
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
 			return
 		}
 
-		clientcmn.PostProcessQueryResponse(w, cliCtx.WithHeight(height), bz)
+		commonrest.PostProcessQueryResponse(w, cliCtx.WithHeight(height), bz)
 	}
 }
 
@@ -220,7 +222,7 @@ func getMultiRequestSearchHandler(cliCtx context.CLIContext, route string) http.
 			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
 			return
 		}
-		clientcmn.PostProcessQueryResponse(w, cliCtx.WithHeight(height), bz)
+		commonrest.PostProcessQueryResponse(w, cliCtx.WithHeight(height), bz)
 	}
 }
 
@@ -236,7 +238,7 @@ func getValidatorStatusHandler(cliCtx context.CLIContext, route string) http.Han
 			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
 			return
 		}
-		clientcmn.PostProcessQueryResponse(w, cliCtx.WithHeight(height), bz)
+		commonrest.PostProcessQueryResponse(w, cliCtx.WithHeight(height), bz)
 	}
 }
 
@@ -252,7 +254,7 @@ func getReportersHandler(cliCtx context.CLIContext, route string) http.HandlerFu
 			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
 			return
 		}
-		clientcmn.PostProcessQueryResponse(w, cliCtx.WithHeight(height), bz)
+		commonrest.PostProcessQueryResponse(w, cliCtx.WithHeight(height), bz)
 	}
 }
 
@@ -267,7 +269,7 @@ func getActiveValidatorsHandler(cliCtx context.CLIContext, route string) http.Ha
 			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
 			return
 		}
-		clientcmn.PostProcessQueryResponse(w, cliCtx.WithHeight(height), bz)
+		commonrest.PostProcessQueryResponse(w, cliCtx.WithHeight(height), bz)
 	}
 }
 
@@ -282,7 +284,7 @@ func dataProvidersPoolHandler(cliCtx context.CLIContext, queryRoute string) http
 			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
 			return
 		}
-		clientcmn.PostProcessQueryResponse(w, cliCtx.WithHeight(height), bz)
+		commonrest.PostProcessQueryResponse(w, cliCtx.WithHeight(height), bz)
 	}
 }
 
@@ -316,6 +318,6 @@ func verifyRequest(cliCtx context.CLIContext, route string) http.HandlerFunc {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
-		clientcmn.PostProcessQueryResponse(w, cliCtx.WithHeight(height), bz)
+		commonrest.PostProcessQueryResponse(w, cliCtx.WithHeight(height), bz)
 	}
 }

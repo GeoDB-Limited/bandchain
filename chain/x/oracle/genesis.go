@@ -3,7 +3,6 @@ package oracle
 import (
 	"encoding/json"
 	"fmt"
-
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	abci "github.com/tendermint/tendermint/abci/types"
@@ -31,14 +30,7 @@ func DefaultGenesisState() GenesisState {
 
 // InitGenesis performs genesis initialization for the oracle module.
 func InitGenesis(ctx sdk.Context, k Keeper, supplyKeeper types.SupplyKeeper, data GenesisState) []abci.ValidatorUpdate {
-	k.SetParam(ctx, types.KeyMaxRawRequestCount, data.Params.MaxRawRequestCount)
-	k.SetParam(ctx, types.KeyMaxAskCount, data.Params.MaxAskCount)
-	k.SetParam(ctx, types.KeyExpirationBlockCount, data.Params.ExpirationBlockCount)
-	k.SetParam(ctx, types.KeyBaseRequestGas, data.Params.BaseRequestGas)
-	k.SetParam(ctx, types.KeyPerValidatorRequestGas, data.Params.PerValidatorRequestGas)
-	k.SetParam(ctx, types.KeySamplingTryCount, data.Params.SamplingTryCount)
-	k.SetParam(ctx, types.KeyOracleRewardPercentage, data.Params.OracleRewardPercentage)
-	k.SetParam(ctx, types.KeyInactivePenaltyDuration, data.Params.InactivePenaltyDuration)
+	k.SetParams(ctx, data.Params)
 	k.SetDataSourceCount(ctx, 0)
 	k.SetOracleScriptCount(ctx, 0)
 	k.SetRequestCount(ctx, 0)
