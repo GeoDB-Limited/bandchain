@@ -72,6 +72,7 @@ func (k WrappedSupplyKeeper) BurnCoins(ctx sdk.Context, moduleName string, amt s
 		))
 	}
 
+	// TODO: refactor to FundCommunityPool method
 	// Instead of burning coins, we send them to the community pool.
 	k.SendCoinsFromModuleToModule(ctx, moduleName, distr.ModuleName, amt)
 	feePool := k.distrKeeper.GetFeePool(ctx)
@@ -91,10 +92,10 @@ func (k WrappedSupplyKeeper) MintCoins(ctx sdk.Context, moduleName string, amt s
 		return k.Keeper.MintCoins(ctx, moduleName, amt)
 	}
 
-	vanillaMinting := k.mintKeeper.GetParams(ctx).MintAir
-	if vanillaMinting {
+	if k.mintKeeper.GetParams(ctx).MintAir {
 		return k.Keeper.MintCoins(ctx, moduleName, amt)
 	}
+
 	acc := k.GetModuleAccount(ctx, moduleName)
 	if acc == nil {
 		panic(sdkerrors.Wrapf(sdkerrors.ErrUnknownAddress, "module account %s does not exist", moduleName))
@@ -112,6 +113,15 @@ func (k WrappedSupplyKeeper) MintCoins(ctx sdk.Context, moduleName string, amt s
 		return err
 	}
 	logger.Info(fmt.Sprintf("minted %s from %s module account", amt.String(), moduleName))
+
+	// TODO: refactor to wrapped distribution module with method WithdrawFeePool
+	feePool := k.distrKeeper.GetFeePool(ctx)
+	diff, hasNeg := feePool.CommunityPool.SafeSub(sdk.NewDecCoinsFromCoins(amt...))
+	if hasNeg {
+		return sdkerrors.Wrap(sdkerrors.ErrInsufficientFunds, "fee pool does not have enough funds")
+	}
+	feePool.CommunityPool = diff
+	k.distrKeeper.SetFeePool(ctx, feePool)
 
 	return nil
 }

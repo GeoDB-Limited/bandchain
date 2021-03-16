@@ -21,9 +21,12 @@ type SupplyKeeper interface {
 type DistrKeeper interface {
 	GetFeePool(ctx sdk.Context) (feePool distr.FeePool)
 	SetFeePool(ctx sdk.Context, feePool distr.FeePool)
+	FundCommunityPool(ctx sdk.Context, amount sdk.Coins, sender sdk.AccAddress) error
 }
 
 type OracleKeeper interface {
 	GetOraclePool(ctx sdk.Context) (oraclePool oracle.OraclePool)
 	SetOraclePool(ctx sdk.Context, oraclePool oracle.OraclePool)
+	WithdrawOraclePool(ctx sdk.Context, amount sdk.Coins, recipient sdk.AccAddress) error
+	FundOraclePool(ctx sdk.Context, amount sdk.Coins, sender sdk.AccAddress) error
 }

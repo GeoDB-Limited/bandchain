@@ -6,14 +6,16 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
+	"github.com/GeoDB-Limited/odincore/chain/x/oracle/utils"
+	"github.com/cosmos/cosmos-sdk/x/bank"
 	"testing"
 	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
+	"github.com/GeoDB-Limited/odincore/chain/x/common/testapp"
 	"github.com/GeoDB-Limited/odincore/chain/x/oracle"
-	"github.com/GeoDB-Limited/odincore/chain/x/oracle/testapp"
 	"github.com/GeoDB-Limited/odincore/chain/x/oracle/types"
 )
 
@@ -243,7 +245,7 @@ func TestEditOracleScriptFail(t *testing.T) {
 }
 
 func TestRequestDataSuccess(t *testing.T) {
-	_, ctx, k := testapp.CreateTestInput(true)
+	app, ctx, k := testapp.CreateTestInput(true)
 	ctx = ctx.WithBlockHeight(124).WithBlockTime(testapp.ParseTime(1581589790))
 	msg := types.NewMsgRequestData(1, []byte("beeb"), 2, 2, "CID", testapp.Alice.Address)
 	res, err := oracle.NewHandler(k)(ctx, msg)
@@ -262,36 +264,46 @@ func TestRequestDataSuccess(t *testing.T) {
 			types.NewRawRequest(3, 3, []byte("beeb")),
 		},
 	), k.MustGetRequest(ctx, 1))
-	require.Equal(t, sdk.Events{sdk.NewEvent(
-		types.EventTypeRequest,
-		sdk.NewAttribute(types.AttributeKeyID, "1"),
-		sdk.NewAttribute(types.AttributeKeyClientID, "CID"),
-		sdk.NewAttribute(types.AttributeKeyOracleScriptID, "1"),
-		sdk.NewAttribute(types.AttributeKeyCalldata, "62656562"), // "beeb" in hex
-		sdk.NewAttribute(types.AttributeKeyAskCount, "2"),
-		sdk.NewAttribute(types.AttributeKeyMinCount, "2"),
-		sdk.NewAttribute(types.AttributeKeyGasUsed, "785"),
-		sdk.NewAttribute(types.AttributeKeyValidator, testapp.Validator3.ValAddress.String()),
-		sdk.NewAttribute(types.AttributeKeyValidator, testapp.Validator1.ValAddress.String()),
-	), sdk.NewEvent(
-		types.EventTypeRawRequest,
-		sdk.NewAttribute(types.AttributeKeyDataSourceID, "1"),
-		sdk.NewAttribute(types.AttributeKeyDataSourceHash, testapp.DataSources[1].Filename),
-		sdk.NewAttribute(types.AttributeKeyExternalID, "1"),
-		sdk.NewAttribute(types.AttributeKeyCalldata, "beeb"),
-	), sdk.NewEvent(
-		types.EventTypeRawRequest,
-		sdk.NewAttribute(types.AttributeKeyDataSourceID, "2"),
-		sdk.NewAttribute(types.AttributeKeyDataSourceHash, testapp.DataSources[2].Filename),
-		sdk.NewAttribute(types.AttributeKeyExternalID, "2"),
-		sdk.NewAttribute(types.AttributeKeyCalldata, "beeb"),
-	), sdk.NewEvent(
-		types.EventTypeRawRequest,
-		sdk.NewAttribute(types.AttributeKeyDataSourceID, "3"),
-		sdk.NewAttribute(types.AttributeKeyDataSourceHash, testapp.DataSources[3].Filename),
-		sdk.NewAttribute(types.AttributeKeyExternalID, "3"),
-		sdk.NewAttribute(types.AttributeKeyCalldata, "beeb"),
-	)}, res.Events)
+	require.Equal(t, sdk.Events{
+		sdk.NewEvent(
+			bank.EventTypeTransfer,
+			sdk.NewAttribute(bank.AttributeKeyRecipient, app.SupplyKeeper.GetModuleAddress(oracle.ModuleName).String()),
+			sdk.NewAttribute(bank.AttributeKeySender, testapp.Alice.Address.String()),
+			sdk.NewAttribute(sdk.AttributeKeyAmount, testapp.Coin10odin.String())),
+		sdk.NewEvent(
+			sdk.EventTypeMessage,
+			sdk.NewAttribute(bank.AttributeKeySender, testapp.Alice.Address.String()),
+		),
+		sdk.NewEvent(
+			types.EventTypeRequest,
+			sdk.NewAttribute(types.AttributeKeyID, "1"),
+			sdk.NewAttribute(types.AttributeKeyClientID, "CID"),
+			sdk.NewAttribute(types.AttributeKeyOracleScriptID, "1"),
+			sdk.NewAttribute(types.AttributeKeyCalldata, "62656562"), // "beeb" in hex
+			sdk.NewAttribute(types.AttributeKeyAskCount, "2"),
+			sdk.NewAttribute(types.AttributeKeyMinCount, "2"),
+			sdk.NewAttribute(types.AttributeKeyGasUsed, "3089"), // TODO: might change
+			sdk.NewAttribute(types.AttributeKeyValidator, testapp.Validator3.ValAddress.String()),
+			sdk.NewAttribute(types.AttributeKeyValidator, testapp.Validator1.ValAddress.String()),
+		), sdk.NewEvent(
+			types.EventTypeRawRequest,
+			sdk.NewAttribute(types.AttributeKeyDataSourceID, "1"),
+			sdk.NewAttribute(types.AttributeKeyDataSourceHash, testapp.DataSources[1].Filename),
+			sdk.NewAttribute(types.AttributeKeyExternalID, "1"),
+			sdk.NewAttribute(types.AttributeKeyCalldata, "beeb"),
+		), sdk.NewEvent(
+			types.EventTypeRawRequest,
+			sdk.NewAttribute(types.AttributeKeyDataSourceID, "2"),
+			sdk.NewAttribute(types.AttributeKeyDataSourceHash, testapp.DataSources[2].Filename),
+			sdk.NewAttribute(types.AttributeKeyExternalID, "2"),
+			sdk.NewAttribute(types.AttributeKeyCalldata, "beeb"),
+		), sdk.NewEvent(
+			types.EventTypeRawRequest,
+			sdk.NewAttribute(types.AttributeKeyDataSourceID, "3"),
+			sdk.NewAttribute(types.AttributeKeyDataSourceHash, testapp.DataSources[3].Filename),
+			sdk.NewAttribute(types.AttributeKeyExternalID, "3"),
+			sdk.NewAttribute(types.AttributeKeyCalldata, "beeb"),
+		)}, res.Events)
 }
 
 func TestRequestDataFail(t *testing.T) {
@@ -362,6 +374,16 @@ func TestReportSuccess(t *testing.T) {
 	require.Contains(t, k.GetReports(ctx, 42), types.NewReport(testapp.Validator1.ValAddress, true, reports))
 	require.Contains(t, k.GetReports(ctx, 42), types.NewReport(testapp.Validator2.ValAddress, true, reports))
 	require.Contains(t, k.GetReports(ctx, 42), types.NewReport(testapp.Validator3.ValAddress, false, reports))
+
+	// Check that data providers have pending rewards
+	dataProviderRewardPerByte := k.GetDataProviderRewardPerByteParam(ctx)
+	ds1 := k.MustGetDataSource(ctx, 1)
+	ds2 := k.MustGetDataSource(ctx, 2)
+
+	require.Equal(t, utils.CalculateReward([]byte("data1"), dataProviderRewardPerByte.Value()).Add(
+		utils.CalculateReward([]byte("data2"), dataProviderRewardPerByte.Value())), k.GetDataProviderAccumulatedReward(ctx, ds1.Owner))
+	require.Equal(t, utils.CalculateReward([]byte("data1"), dataProviderRewardPerByte.Value()).Add(
+		utils.CalculateReward([]byte("data2"), dataProviderRewardPerByte.Value())), k.GetDataProviderAccumulatedReward(ctx, ds2.Owner))
 }
 
 func TestReportFail(t *testing.T) {

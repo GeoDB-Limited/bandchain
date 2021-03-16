@@ -39,22 +39,30 @@ type Account struct {
 
 // nolint
 var (
-	Owner         Account
-	Alice         Account
-	Bob           Account
-	Carol         Account
-	Validator1    Account
-	Validator2    Account
-	Validator3    Account
-	DataSources   []types.DataSource
-	OracleScripts []types.OracleScript
+	OraclePoolProvider Account
+	FeePoolProvider    Account
+	Owner              Account
+	Alice              Account
+	Bob                Account
+	Carol              Account
+	Validator1         Account
+	Validator2         Account
+	Validator3         Account
+	DataSources        []types.DataSource
+	OracleScripts      []types.OracleScript
 )
 
 // nolint
 var (
-	Coins1000000uband   = sdk.NewCoins(sdk.NewInt64Coin("uband", 1000000))
-	Coins99999999uband  = sdk.NewCoins(sdk.NewInt64Coin("uband", 99999999))
-	Coins100000000uband = sdk.NewCoins(sdk.NewInt64Coin("uband", 100000000))
+	Coin1geo                 = sdk.NewInt64Coin("geo", 1)
+	Coin10odin               = sdk.NewInt64Coin("odin", 10)
+	Coin100000000geo         = sdk.NewInt64Coin("geo", 1000000)
+	Coins1000000odin         = sdk.NewCoins(sdk.NewInt64Coin("odin", 1000000))
+	Coins99999999odin        = sdk.NewCoins(sdk.NewInt64Coin("odin", 99999999))
+	Coin100000000odin        = sdk.NewInt64Coin("odin", 100000000)
+	Coins100000000odin       = sdk.NewCoins(Coin100000000odin)
+	DefaultDataProvidersPool = sdk.NewCoins(Coin100000000odin)
+	DefaultCommunityPool     = sdk.NewCoins(Coin100000000geo, Coin100000000odin)
 )
 
 func init() {
@@ -67,6 +75,8 @@ func init() {
 	Validator1 = createArbitraryAccount(r)
 	Validator2 = createArbitraryAccount(r)
 	Validator3 = createArbitraryAccount(r)
+	OraclePoolProvider = createArbitraryAccount(r)
+	FeePoolProvider = createArbitraryAccount(r)
 }
 
 func createArbitraryAccount(r *rand.Rand) Account {
@@ -149,28 +159,35 @@ func NewSimApp(chainID string, logger log.Logger) *bandapp.BandApp {
 	db := dbm.NewMemDB()
 	app := bandapp.NewBandApp(logger, db, nil, true, 0, map[int64]bool{}, "", false)
 	genesis := bandapp.NewDefaultGenesisState()
-	// Fund seed accounts and validators with 1000000uband and 100000000uband initially.
+	// Fund seed accounts and validators with 1000000odin and 100000000odin initially.
 	authGenesis := auth.NewGenesisState(auth.DefaultParams(), []authexported.GenesisAccount{
-		&auth.BaseAccount{Address: Owner.Address, Coins: Coins1000000uband},
-		&auth.BaseAccount{Address: Alice.Address, Coins: Coins1000000uband},
-		&auth.BaseAccount{Address: Bob.Address, Coins: Coins1000000uband},
-		&auth.BaseAccount{Address: Carol.Address, Coins: Coins1000000uband},
-		&auth.BaseAccount{Address: Validator1.Address, Coins: Coins100000000uband},
-		&auth.BaseAccount{Address: Validator2.Address, Coins: Coins100000000uband},
-		&auth.BaseAccount{Address: Validator3.Address, Coins: Coins100000000uband},
+		&auth.BaseAccount{Address: Owner.Address, Coins: Coins1000000odin},
+		&auth.BaseAccount{Address: Alice.Address, Coins: Coins1000000odin.Add(Coin100000000geo)},
+		&auth.BaseAccount{Address: Bob.Address, Coins: Coins1000000odin},
+		&auth.BaseAccount{Address: Carol.Address, Coins: Coins1000000odin},
+		&auth.BaseAccount{Address: Validator1.Address, Coins: Coins100000000odin},
+		&auth.BaseAccount{Address: Validator2.Address, Coins: Coins100000000odin},
+		&auth.BaseAccount{Address: Validator3.Address, Coins: Coins100000000odin},
+		&auth.BaseAccount{Address: OraclePoolProvider.Address, Coins: DefaultDataProvidersPool},
+		&auth.BaseAccount{Address: FeePoolProvider.Address, Coins: DefaultCommunityPool},
 	})
 	genesis[auth.ModuleName] = app.Codec().MustMarshalJSON(authGenesis)
 	// Add genesis transactions to create 3 validators during chain genesis.
 	genutilGenesis := genutil.NewGenesisStateFromStdTx([]authtypes.StdTx{
-		createValidatorTx(chainID, Validator1, "validator1", Coins100000000uband[0]),
-		createValidatorTx(chainID, Validator2, "validator2", Coins1000000uband[0]),
-		createValidatorTx(chainID, Validator3, "validator3", Coins99999999uband[0]),
+		createValidatorTx(chainID, Validator1, "validator1", Coins100000000odin[0]),
+		createValidatorTx(chainID, Validator2, "validator2", Coins1000000odin[0]),
+		createValidatorTx(chainID, Validator3, "validator3", Coins99999999odin[0]),
 	})
 	genesis[genutil.ModuleName] = app.Codec().MustMarshalJSON(genutilGenesis)
 	// Add genesis data sources and oracle scripts
 	oracleGenesis := oracle.DefaultGenesisState()
+
+	oracleGenesis.Params.DataRequesterBasicFee = types.CoinProto(Coin10odin)
+	oracleGenesis.Params.DataProviderRewardPerByte = types.CoinDecProto(sdk.NewDecCoinFromCoin(Coin1geo))
+
 	oracleGenesis.DataSources = getGenesisDataSources()
 	oracleGenesis.OracleScripts = getGenesisOracleScripts()
+
 	genesis[oracle.ModuleName] = app.Codec().MustMarshalJSON(oracleGenesis)
 	// Initialize the sim blockchain. We are ready for testing!
 	app.InitChain(abci.RequestInitChain{
@@ -182,13 +199,22 @@ func NewSimApp(chainID string, logger log.Logger) *bandapp.BandApp {
 }
 
 // CreateTestInput creates a new test environment for unit tests.
-func CreateTestInput(autoActivate bool) (*bandapp.BandApp, sdk.Context, me.Keeper) {
-	app := NewSimApp("BANDCHAIN", log.NewNopLogger())
+// params[0] - activate;
+// params[1] - fund pools;
+func CreateTestInput(params ...bool) (*bandapp.BandApp, sdk.Context, me.Keeper) {
+	app := NewSimApp("ODINCHAIN", log.NewNopLogger())
 	ctx := app.NewContext(false, abci.Header{})
-	if autoActivate {
+	if len(params) > 0 && params[0] {
 		app.OracleKeeper.Activate(ctx, Validator1.ValAddress)
 		app.OracleKeeper.Activate(ctx, Validator2.ValAddress)
 		app.OracleKeeper.Activate(ctx, Validator3.ValAddress)
+	}
+
+	if len(params) > 1 && params[1] {
+		app.DistrKeeper.FundCommunityPool(ctx, DefaultCommunityPool, FeePoolProvider.Address)
+		app.OracleKeeper.FundOraclePool(ctx, DefaultDataProvidersPool, OraclePoolProvider.Address)
+
+		ctx = app.NewContext(false, abci.Header{})
 	}
 	return app, ctx, app.OracleKeeper
 }

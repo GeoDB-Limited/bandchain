@@ -6,7 +6,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
-	"github.com/GeoDB-Limited/odincore/chain/x/oracle/testapp"
+	"github.com/GeoDB-Limited/odincore/chain/x/common/testapp"
 	"github.com/GeoDB-Limited/odincore/chain/x/oracle/types"
 )
 

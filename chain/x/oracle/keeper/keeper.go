@@ -69,6 +69,10 @@ func (k Keeper) GetParamUint64(ctx sdk.Context, key []byte) (res uint64) {
 	return res
 }
 
+func (k Keeper) SetParamUint64(ctx sdk.Context, key []byte, value uint64) {
+	k.paramSpace.Set(ctx, key, value)
+}
+
 // SetParam saves the given key-value parameter to the store.
 func (k Keeper) SetParams(ctx sdk.Context, value types.Params) {
 	k.paramSpace.SetParamSet(ctx, &value)

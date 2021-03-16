@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/GeoDB-Limited/odincore/chain/pkg/obi"
-	"github.com/GeoDB-Limited/odincore/chain/x/oracle/testapp"
+	"github.com/GeoDB-Limited/odincore/chain/x/common/testapp"
 	"github.com/GeoDB-Limited/odincore/chain/x/oracle/types"
 )
 
@@ -100,7 +100,7 @@ func TestPrepareRequestSuccessBasic(t *testing.T) {
 		sdk.NewAttribute(types.AttributeKeyCalldata, hex.EncodeToString(BasicCalldata)),
 		sdk.NewAttribute(types.AttributeKeyAskCount, "1"),
 		sdk.NewAttribute(types.AttributeKeyMinCount, "1"),
-		sdk.NewAttribute(types.AttributeKeyGasUsed, "785"),
+		sdk.NewAttribute(types.AttributeKeyGasUsed, "785"), // TODO fix gas estimation
 		sdk.NewAttribute(types.AttributeKeyValidator, testapp.Validator1.ValAddress.String()),
 	), sdk.NewEvent(
 		types.EventTypeRawRequest,
@@ -125,7 +125,7 @@ func TestPrepareRequestSuccessBasic(t *testing.T) {
 
 func TestPrepareRequestInvalidAskCountFail(t *testing.T) {
 	_, ctx, k := testapp.CreateTestInput(true)
-	k.SetParam(ctx, types.KeyMaxAskCount, 5)
+	k.SetParamUint64(ctx, types.KeyMaxAskCount, 5)
 	m := types.NewMsgRequestData(1, BasicCalldata, 10, 1, BasicClientID, testapp.Alice.Address)
 	err := k.PrepareRequest(ctx, &m)
 	require.EqualError(t, err, "invalid ask count: got: 10, max: 5")
@@ -139,8 +139,8 @@ func TestPrepareRequestInvalidAskCountFail(t *testing.T) {
 
 func TestPrepareRequestBaseRequestFeePanic(t *testing.T) {
 	_, ctx, k := testapp.CreateTestInput(true)
-	k.SetParam(ctx, types.KeyBaseRequestGas, 100000) // Set BaseRequestGas to 100000
-	k.SetParam(ctx, types.KeyPerValidatorRequestGas, 0)
+	k.SetParamUint64(ctx, types.KeyBaseRequestGas, 100000) // Set BaseRequestGas to 100000
+	k.SetParamUint64(ctx, types.KeyPerValidatorRequestGas, 0)
 	m := types.NewMsgRequestData(1, BasicCalldata, 1, 1, BasicClientID, testapp.Alice.Address)
 	ctx = ctx.WithGasMeter(sdk.NewGasMeter(90000))
 	require.PanicsWithValue(t, sdk.ErrorOutOfGas{Descriptor: "BASE_REQUEST_FEE"}, func() { k.PrepareRequest(ctx, &m) })
@@ -149,10 +149,11 @@ func TestPrepareRequestBaseRequestFeePanic(t *testing.T) {
 	require.NoError(t, err)
 }
 
+// TODO fix gas estimation
 func TestPrepareRequestPerValidatorRequestFeePanic(t *testing.T) {
 	_, ctx, k := testapp.CreateTestInput(true)
-	k.SetParam(ctx, types.KeyBaseRequestGas, 100000)
-	k.SetParam(ctx, types.KeyPerValidatorRequestGas, 50000) // Set erValidatorRequestGas to 50000
+	k.SetParamUint64(ctx, types.KeyBaseRequestGas, 100000)
+	k.SetParamUint64(ctx, types.KeyPerValidatorRequestGas, 50000) // Set erValidatorRequestGas to 50000
 	m := types.NewMsgRequestData(1, BasicCalldata, 2, 1, BasicClientID, testapp.Alice.Address)
 	ctx = ctx.WithGasMeter(sdk.NewGasMeter(190000))
 	require.PanicsWithValue(t, sdk.ErrorOutOfGas{Descriptor: "PER_VALIDATOR_REQUEST_FEE"}, func() { k.PrepareRequest(ctx, &m) })
@@ -202,7 +203,7 @@ func TestPrepareRequestUnknownDataSource(t *testing.T) {
 
 func TestPrepareRequestInvalidDataSourceCount(t *testing.T) {
 	_, ctx, k := testapp.CreateTestInput(true)
-	k.SetParam(ctx, types.KeyMaxRawRequestCount, 3)
+	k.SetParamUint64(ctx, types.KeyMaxRawRequestCount, 3)
 	m := types.NewMsgRequestData(4, obi.MustEncode(testapp.Wasm4Input{
 		IDs:      []int64{1, 2, 3, 4},
 		Calldata: "beeb",
