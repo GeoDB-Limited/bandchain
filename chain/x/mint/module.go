@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/GeoDB-Limited/odincore/chain/x/mint/client/cli"
 	"github.com/GeoDB-Limited/odincore/chain/x/mint/client/rest"
+	"github.com/GeoDB-Limited/odincore/chain/x/mint/internal/types"
 	"github.com/GeoDB-Limited/odincore/chain/x/mint/simulation"
 	"math/rand"
 
@@ -73,8 +74,8 @@ func (AppModuleBasic) GetQueryCmd(cdc *codec.Codec) *cobra.Command {
 // AppModule implements an application module for the mint module.
 type AppModule struct {
 	AppModuleBasic
-
-	keeper Keeper
+	supplyKeeper types.SupplyKeeper
+	keeper       Keeper
 }
 
 // NewAppModule creates a new AppModule object
@@ -114,7 +115,7 @@ func (am AppModule) NewQuerierHandler() sdk.Querier {
 func (am AppModule) InitGenesis(ctx sdk.Context, data json.RawMessage) []abci.ValidatorUpdate {
 	var genesisState GenesisState
 	ModuleCdc.MustUnmarshalJSON(data, &genesisState)
-	InitGenesis(ctx, am.keeper, genesisState)
+	InitGenesis(ctx, am.keeper, am.supplyKeeper, genesisState)
 	return []abci.ValidatorUpdate{}
 }
 

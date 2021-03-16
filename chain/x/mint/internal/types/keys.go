@@ -1,8 +1,5 @@
 package types
 
-// MinterKey is used for the keeper store
-var MinterKey = []byte{0x00}
-
 // nolint
 const (
 	// ModuleName
@@ -23,4 +20,14 @@ const (
 	QueryParameters       = "parameters"
 	QueryInflation        = "inflation"
 	QueryAnnualProvisions = "annual_provisions"
+)
+
+var (
+	GlobalStoreKeyPrefix = []byte{0x00}
+
+	// AccountsPoolStoreKey is used for the eligible accounts store
+	AccountsPoolStoreKey = append(GlobalStoreKeyPrefix, []byte("AccountsPool")...)
+
+	// MinterKey is used for the keeper store
+	MinterKey = append(GlobalStoreKeyPrefix, []byte("Minter")...)
 )

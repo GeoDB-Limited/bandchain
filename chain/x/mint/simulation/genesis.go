@@ -88,7 +88,7 @@ func RandomizedGenState(simState *module.SimulationState) {
 	blocksPerYear := uint64(60 * 60 * 8766 / 5)
 	params := types.NewParams(mintDenom, inflationRateChange, inflationMax, inflationMin, goalBonded, blocksPerYear, mintAir)
 
-	mintGenesis := types.NewGenesisState(types.InitialMinter(inflation), params)
+	mintGenesis := types.NewGenesisState(types.InitialMinter(inflation), params, types.AccPool{})
 
 	fmt.Printf("Selected randomly generated minting parameters:\n%s\n", codec.MustMarshalJSONIndent(simState.Cdc, mintGenesis))
 	simState.GenState[types.ModuleName] = simState.Cdc.MustMarshalJSON(mintGenesis)

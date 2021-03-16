@@ -3,6 +3,7 @@ package keeper
 import (
 	"fmt"
 	"github.com/GeoDB-Limited/odincore/chain/x/mint/internal/types"
+	"github.com/cosmos/cosmos-sdk/x/supply/exported"
 
 	"github.com/tendermint/tendermint/libs/log"
 
@@ -61,11 +62,36 @@ func (k Keeper) GetMinter(ctx sdk.Context) (minter types.Minter) {
 	return
 }
 
-// set the minter
+// SetMinter sets the minter
 func (k Keeper) SetMinter(ctx sdk.Context, minter types.Minter) {
 	store := ctx.KVStore(k.storeKey)
 	b := k.cdc.MustMarshalBinaryLengthPrefixed(minter)
 	store.Set(types.MinterKey, b)
+}
+
+// GetMinterAccount returns the mint ModuleAccount
+func (k Keeper) GetMinterAccount(ctx sdk.Context) exported.ModuleAccountI {
+	return k.supplyKeeper.GetModuleAccount(ctx, types.ModuleName)
+}
+
+//__________________________________________________________________________
+
+// GetAccPool load/save the pool of eligible accounts
+func (k Keeper) GetAccPool(ctx sdk.Context) (accPool types.AccPool) {
+	store := ctx.KVStore(k.storeKey)
+	b := store.Get(types.AccountsPoolStoreKey)
+	if b == nil {
+		panic("Stored pool should not have been nil")
+	}
+	k.cdc.MustUnmarshalBinaryLengthPrefixed(b, &accPool)
+	return
+}
+
+// SetAccPool sets the pool of eligible accounts
+func (k Keeper) SetAccPool(ctx sdk.Context, accPool types.AccPool) {
+	store := ctx.KVStore(k.storeKey)
+	b := k.cdc.MustMarshalBinaryLengthPrefixed(accPool)
+	store.Set(types.AccountsPoolStoreKey, b)
 }
 
 //______________________________________________________________________
