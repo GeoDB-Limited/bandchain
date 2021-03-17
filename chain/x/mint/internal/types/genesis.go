@@ -1,16 +1,11 @@
 package types
 
-import sdk "github.com/cosmos/cosmos-sdk/types"
-
 // GenesisState - minter state
 type GenesisState struct {
 	Minter  Minter  `json:"minter" yaml:"minter"`                       // minter object
 	Params  Params  `json:"params" yaml:"params"`                       // inflation params
 	AccPool AccPool `json:"eligible_accounts" yaml:"eligible_accounts"` // pool of eligible accounts
 }
-
-// AccPool defines a pool of accounts
-type AccPool = []sdk.AccAddress
 
 // NewGenesisState creates a new GenesisState object
 func NewGenesisState(minter Minter, params Params, accPool AccPool) GenesisState {

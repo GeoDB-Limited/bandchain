@@ -12,6 +12,7 @@ const (
 	DefaultParamspace     = types.DefaultParamspace
 	StoreKey              = types.StoreKey
 	QuerierRoute          = types.QuerierRoute
+	RouterKey             = types.RouterKey
 	QueryParameters       = types.QueryParameters
 	QueryInflation        = types.QueryInflation
 	QueryAnnualProvisions = types.QueryAnnualProvisions
@@ -44,8 +45,9 @@ var (
 )
 
 type (
-	Keeper       = keeper.Keeper
-	GenesisState = types.GenesisState
-	Minter       = types.Minter
-	Params       = types.Params
+	Keeper        = keeper.Keeper
+	GenesisState  = types.GenesisState
+	Minter        = types.Minter
+	Params        = types.Params
+	MsgMintTokens = types.MsgMintTokens
 )

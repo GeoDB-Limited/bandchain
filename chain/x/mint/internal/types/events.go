@@ -7,4 +7,7 @@ const (
 	AttributeKeyBondedRatio      = "bonded_ratio"
 	AttributeKeyInflation        = "inflation"
 	AttributeKeyAnnualProvisions = "annual_provisions"
+	AttributeKeySender           = "sender"
+	AttributeKeyDepositor        = "depositor"
+	AttributeKeyMintAmount       = "mint_amount"
 )

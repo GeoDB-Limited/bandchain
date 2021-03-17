@@ -137,3 +137,8 @@ func (k Keeper) MintCoins(ctx sdk.Context, newCoins sdk.Coins) error {
 func (k Keeper) AddCollectedFees(ctx sdk.Context, fees sdk.Coins) error {
 	return k.supplyKeeper.SendCoinsFromModuleToModule(ctx, types.ModuleName, k.feeCollectorName, fees)
 }
+
+func (k Keeper) IsEligibleAccount(ctx sdk.Context, acc sdk.AccAddress) bool {
+	accPool := k.GetAccPool(ctx)
+	return accPool.Contains(acc)
+}

@@ -62,7 +62,9 @@ func (AppModuleBasic) RegisterRESTRoutes(ctx context.CLIContext, rtr *mux.Router
 }
 
 // GetTxCmd returns no root tx command for the mint module.
-func (AppModuleBasic) GetTxCmd(_ *codec.Codec) *cobra.Command { return nil }
+func (AppModuleBasic) GetTxCmd(cdc *codec.Codec) *cobra.Command {
+	return cli.GetTxCmd(cdc)
+}
 
 // GetQueryCmd returns the root query command for the mint module.
 func (AppModuleBasic) GetQueryCmd(cdc *codec.Codec) *cobra.Command {
@@ -87,18 +89,16 @@ func NewAppModule(keeper Keeper) AppModule {
 }
 
 // Name returns the mint module's name.
-func (AppModule) Name() string {
-	return ModuleName
-}
+func (AppModule) Name() string { return ModuleName }
 
 // RegisterInvariants registers the mint module invariants.
 func (am AppModule) RegisterInvariants(_ sdk.InvariantRegistry) {}
 
 // Route returns the message routing key for the mint module.
-func (AppModule) Route() string { return "" }
+func (AppModule) Route() string { return RouterKey }
 
-// NewHandler returns an sdk.Handler for the mint module.
-func (am AppModule) NewHandler() sdk.Handler { return nil }
+// NewHandler returns the function to process oracle messages (SDK AppModule interface).
+func (am AppModule) NewHandler() sdk.Handler { return NewHandler(am.keeper) }
 
 // QuerierRoute returns the mint module's querier route name.
 func (AppModule) QuerierRoute() string {

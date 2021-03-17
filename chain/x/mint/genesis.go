@@ -17,6 +17,7 @@ func InitGenesis(ctx sdk.Context, keeper Keeper, supplyKeeper types.SupplyKeeper
 		panic(fmt.Sprintf("%s module account has not been set", ModuleName))
 	}
 
+	// TODO: give 50%
 	supplyKeeper.SetModuleAccount(ctx, moduleAcc)
 }
 
