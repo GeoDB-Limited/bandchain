@@ -28,6 +28,7 @@ func GetQueryCmd(cdc *codec.Codec) *cobra.Command {
 			GetCmdQueryParams(cdc),
 			GetCmdQueryInflation(cdc),
 			GetCmdQueryAnnualProvisions(cdc),
+			GetCmdQueryEthIntegrationAddress(cdc),
 		)...,
 	)
 
@@ -108,6 +109,29 @@ func GetCmdQueryAnnualProvisions(cdc *codec.Codec) *cobra.Command {
 			}
 
 			return cliCtx.PrintOutput(inflation)
+		},
+	}
+}
+
+func GetCmdQueryEthIntegrationAddress(cdc *codec.Codec) *cobra.Command {
+	return &cobra.Command{
+		Use:   "eth-integration-address",
+		Short: "Query current ETH integration address",
+		Args:  cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			cliCtx := context.NewCLIContext().WithCodec(cdc)
+
+			route := fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.EthIntegrationAddress)
+			res, _, err := cliCtx.QueryWithData(route, nil)
+			if err != nil {
+				return err
+			}
+
+			var ethIntegrationAddress string
+			if err := cdc.UnmarshalJSON(res, &ethIntegrationAddress); err != nil {
+				return err
+			}
+			return cliCtx.PrintOutput(ethIntegrationAddress)
 		},
 	}
 }

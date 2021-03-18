@@ -51,6 +51,7 @@
     },
     "oracle": {
       "params": {
+        "eth_integration_address": "0xa19Df1199CeEfd7831576f1D055E454364337633",
         "max_raw_request_count": "12",
         "max_ask_count": "16",
         "expiration_block_count": "100",
@@ -59,6 +60,8 @@
         "sampling_try_count": "3",
         "oracle_reward_percentage": "70",
         "inactive_penalty_duration": "600000000000",
+        "max_data_size": "1024",
+        "max_calldata_size": "1024",
         "data_provider_reward_per_byte": {
           "denom": "geo",
           "amount": "1.000000000000000000"
