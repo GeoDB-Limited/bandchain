@@ -36,6 +36,7 @@
         "annual_provisions": "0.000000000000000000"
       },
       "params": {
+        "eth_integration_address": "0xa19Df1199CeEfd7831576f1D055E454364337633",
         "mint_denom": "loki",
         "inflation_rate_change": "0.000000000000000000",
         "inflation_max": "0.120000000000000000",
@@ -51,7 +52,6 @@
     },
     "oracle": {
       "params": {
-        "eth_integration_address": "0xa19Df1199CeEfd7831576f1D055E454364337633",
         "max_raw_request_count": "12",
         "max_ask_count": "16",
         "expiration_block_count": "100",

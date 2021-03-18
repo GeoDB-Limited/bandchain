@@ -121,7 +121,7 @@ func GetCmdQueryEthIntegrationAddress(cdc *codec.Codec) *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 
-			route := fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.EthIntegrationAddress)
+			route := fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryEthIntegrationAddress)
 			res, _, err := cliCtx.QueryWithData(route, nil)
 			if err != nil {
 				return err

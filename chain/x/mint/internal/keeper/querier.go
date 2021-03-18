@@ -22,7 +22,7 @@ func NewQuerier(k Keeper) sdk.Querier {
 		case types.QueryAnnualProvisions:
 			return queryAnnualProvisions(ctx, k)
 
-		case types.EthIntegrationAddress:
+		case types.QueryEthIntegrationAddress:
 			return queryEthIntegrationAddress(ctx, k)
 
 		default:

@@ -20,8 +20,9 @@ const (
 	QuerierRoute = StoreKey
 
 	// Query endpoints supported by the minting querier
-	QueryParameters       = "parameters"
-	QueryInflation        = "inflation"
-	QueryAnnualProvisions = "annual_provisions"
-	EthIntegrationAddress = "eth_integration_address"
+	QueryRoute                 = "minting"
+	QueryParameters            = "parameters"
+	QueryInflation             = "inflation"
+	QueryAnnualProvisions      = "annual_provisions"
+	QueryEthIntegrationAddress = "eth_integration_address"
 )
