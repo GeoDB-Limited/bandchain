@@ -64,13 +64,15 @@ func (k Keeper) PrepareRequest(ctx sdk.Context, r types.RequestWithSenderSpec) e
 		ctx.BlockHeight(), ctx.BlockTime(), r.GetClientID(), nil,
 	)
 	// Create an execution environment and call Owasm prepare function.
-	env := types.NewPrepareEnv(req, int64(k.GetParamUint64(ctx, types.KeyMaxRawRequestCount)))
+	env := types.NewPrepareEnv(req, int64(k.GetParamUint64(ctx, types.KeyMaxRawRequestCount)), int64(k.GetParamUint64(ctx, types.KeyMaxDataSize)))
 	script, err := k.GetOracleScript(ctx, req.OracleScriptID)
 	if err != nil {
 		return err
 	}
 	code := k.GetFile(script.Filename)
-	output, err := owasm.Prepare(code, types.WasmPrepareGas, types.MaxDataSize, env)
+
+	maxDataSize := k.GetParamUint64(ctx, types.KeyMaxDataSize)
+	output, err := owasm.Prepare(code, types.WasmPrepareGas, int64(maxDataSize), env)
 	if err != nil {
 		return sdkerrors.Wrapf(types.ErrBadWasmExecution, err.Error())
 	}
@@ -133,7 +135,8 @@ func (k Keeper) ResolveRequest(ctx sdk.Context, reqID types.RequestID) {
 	env := types.NewExecuteEnv(req, k.GetReports(ctx, reqID))
 	script := k.MustGetOracleScript(ctx, req.OracleScriptID)
 	code := k.GetFile(script.Filename)
-	output, err := owasm.Execute(code, types.WasmExecuteGas, types.MaxDataSize, env)
+	maxDataSize := k.GetParamUint64(ctx, types.KeyMaxDataSize)
+	output, err := owasm.Execute(code, types.WasmExecuteGas, int64(maxDataSize), env)
 	if err != nil {
 		k.ResolveFailure(ctx, reqID, err.Error())
 	} else if env.Retdata == nil {

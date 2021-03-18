@@ -132,6 +132,10 @@ func handleMsgEditOracleScript(ctx sdk.Context, k Keeper, m MsgEditOracleScript)
 }
 
 func handleMsgRequestData(ctx sdk.Context, k Keeper, m MsgRequestData) (*sdk.Result, error) {
+	maxCalldataSize := k.GetParamUint64(ctx, types.KeyMaxCalldataSize)
+	if len(m.Calldata) > int(maxCalldataSize) {
+		return nil, types.WrapMaxError(types.ErrTooLargeCalldata, len(m.Calldata), int(maxCalldataSize))
+	}
 	err := k.PrepareRequest(ctx, &m)
 	if err != nil {
 		return nil, err
@@ -146,6 +150,12 @@ func handleMsgReportData(ctx sdk.Context, k Keeper, m MsgReportData) (*sdk.Resul
 	}
 	if m.RequestID <= k.GetRequestLastExpired(ctx) {
 		return nil, types.ErrRequestAlreadyExpired
+	}
+	maxDataSize := k.GetParamUint64(ctx, types.KeyMaxDataSize)
+	for _, r := range m.RawReports {
+		if len(r.Data) > int(maxDataSize) {
+			return nil, types.WrapMaxError(types.ErrTooLargeRawReportData, len(r.Data), int(maxDataSize))
+		}
 	}
 
 	err := k.AddReport(ctx, m.RequestID, types.NewReport(m.Validator, !k.HasResult(ctx, m.RequestID), m.RawReports))

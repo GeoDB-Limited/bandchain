@@ -2,6 +2,8 @@ package keeper_test
 
 import (
 	"encoding/hex"
+	"github.com/GeoDB-Limited/odincore/chain/x/oracle"
+	"github.com/cosmos/cosmos-sdk/x/bank"
 	"testing"
 	"time"
 
@@ -78,7 +80,7 @@ func TestGetRandomValidatorsWithActivate(t *testing.T) {
 }
 
 func TestPrepareRequestSuccessBasic(t *testing.T) {
-	_, ctx, k := testapp.CreateTestInput(true)
+	app, ctx, k := testapp.CreateTestInput(true)
 	ctx = ctx.WithBlockTime(testapp.ParseTime(1581589790)).WithBlockHeight(42)
 	// OracleScript#1: Prepare asks for DS#1,2,3 with ExtID#1,2,3 and calldata "beeb"
 	m := types.NewMsgRequestData(1, BasicCalldata, 1, 1, BasicClientID, testapp.Alice.Address)
@@ -92,35 +94,45 @@ func TestPrepareRequestSuccessBasic(t *testing.T) {
 			types.NewRawRequest(3, 3, []byte("beeb")),
 		},
 	), k.MustGetRequest(ctx, 1))
-	require.Equal(t, sdk.Events{sdk.NewEvent(
-		types.EventTypeRequest,
-		sdk.NewAttribute(types.AttributeKeyID, "1"),
-		sdk.NewAttribute(types.AttributeKeyClientID, BasicClientID),
-		sdk.NewAttribute(types.AttributeKeyOracleScriptID, "1"),
-		sdk.NewAttribute(types.AttributeKeyCalldata, hex.EncodeToString(BasicCalldata)),
-		sdk.NewAttribute(types.AttributeKeyAskCount, "1"),
-		sdk.NewAttribute(types.AttributeKeyMinCount, "1"),
-		sdk.NewAttribute(types.AttributeKeyGasUsed, "785"), // TODO fix gas estimation
-		sdk.NewAttribute(types.AttributeKeyValidator, testapp.Validator1.ValAddress.String()),
-	), sdk.NewEvent(
-		types.EventTypeRawRequest,
-		sdk.NewAttribute(types.AttributeKeyDataSourceID, "1"),
-		sdk.NewAttribute(types.AttributeKeyDataSourceHash, testapp.DataSources[1].Filename),
-		sdk.NewAttribute(types.AttributeKeyExternalID, "1"),
-		sdk.NewAttribute(types.AttributeKeyCalldata, "beeb"),
-	), sdk.NewEvent(
-		types.EventTypeRawRequest,
-		sdk.NewAttribute(types.AttributeKeyDataSourceID, "2"),
-		sdk.NewAttribute(types.AttributeKeyDataSourceHash, testapp.DataSources[2].Filename),
-		sdk.NewAttribute(types.AttributeKeyExternalID, "2"),
-		sdk.NewAttribute(types.AttributeKeyCalldata, "beeb"),
-	), sdk.NewEvent(
-		types.EventTypeRawRequest,
-		sdk.NewAttribute(types.AttributeKeyDataSourceID, "3"),
-		sdk.NewAttribute(types.AttributeKeyDataSourceHash, testapp.DataSources[3].Filename),
-		sdk.NewAttribute(types.AttributeKeyExternalID, "3"),
-		sdk.NewAttribute(types.AttributeKeyCalldata, "beeb"),
-	)}, ctx.EventManager().Events())
+	require.Equal(t, sdk.Events{
+		sdk.NewEvent(
+			bank.EventTypeTransfer,
+			sdk.NewAttribute(bank.AttributeKeyRecipient, app.SupplyKeeper.GetModuleAddress(oracle.ModuleName).String()),
+			sdk.NewAttribute(bank.AttributeKeySender, testapp.Alice.Address.String()),
+			sdk.NewAttribute(sdk.AttributeKeyAmount, testapp.Coin10odin.String())),
+		sdk.NewEvent(
+			sdk.EventTypeMessage,
+			sdk.NewAttribute(bank.AttributeKeySender, testapp.Alice.Address.String()),
+		),
+		sdk.NewEvent(
+			types.EventTypeRequest,
+			sdk.NewAttribute(types.AttributeKeyID, "1"),
+			sdk.NewAttribute(types.AttributeKeyClientID, BasicClientID),
+			sdk.NewAttribute(types.AttributeKeyOracleScriptID, "1"),
+			sdk.NewAttribute(types.AttributeKeyCalldata, hex.EncodeToString(BasicCalldata)),
+			sdk.NewAttribute(types.AttributeKeyAskCount, "1"),
+			sdk.NewAttribute(types.AttributeKeyMinCount, "1"),
+			sdk.NewAttribute(types.AttributeKeyGasUsed, "3089"), // TODO: might change
+			sdk.NewAttribute(types.AttributeKeyValidator, testapp.Validator1.ValAddress.String()),
+		), sdk.NewEvent(
+			types.EventTypeRawRequest,
+			sdk.NewAttribute(types.AttributeKeyDataSourceID, "1"),
+			sdk.NewAttribute(types.AttributeKeyDataSourceHash, testapp.DataSources[1].Filename),
+			sdk.NewAttribute(types.AttributeKeyExternalID, "1"),
+			sdk.NewAttribute(types.AttributeKeyCalldata, "beeb"),
+		), sdk.NewEvent(
+			types.EventTypeRawRequest,
+			sdk.NewAttribute(types.AttributeKeyDataSourceID, "2"),
+			sdk.NewAttribute(types.AttributeKeyDataSourceHash, testapp.DataSources[2].Filename),
+			sdk.NewAttribute(types.AttributeKeyExternalID, "2"),
+			sdk.NewAttribute(types.AttributeKeyCalldata, "beeb"),
+		), sdk.NewEvent(
+			types.EventTypeRawRequest,
+			sdk.NewAttribute(types.AttributeKeyDataSourceID, "3"),
+			sdk.NewAttribute(types.AttributeKeyDataSourceHash, testapp.DataSources[3].Filename),
+			sdk.NewAttribute(types.AttributeKeyExternalID, "3"),
+			sdk.NewAttribute(types.AttributeKeyCalldata, "beeb"),
+		)}, ctx.EventManager().Events())
 }
 
 func TestPrepareRequestInvalidAskCountFail(t *testing.T) {
@@ -149,16 +161,15 @@ func TestPrepareRequestBaseRequestFeePanic(t *testing.T) {
 	require.NoError(t, err)
 }
 
-// TODO fix gas estimation
 func TestPrepareRequestPerValidatorRequestFeePanic(t *testing.T) {
 	_, ctx, k := testapp.CreateTestInput(true)
 	k.SetParamUint64(ctx, types.KeyBaseRequestGas, 100000)
-	k.SetParamUint64(ctx, types.KeyPerValidatorRequestGas, 50000) // Set erValidatorRequestGas to 50000
+	k.SetParamUint64(ctx, types.KeyPerValidatorRequestGas, 50000) // Set perValidatorRequestGas to 50000
 	m := types.NewMsgRequestData(1, BasicCalldata, 2, 1, BasicClientID, testapp.Alice.Address)
 	ctx = ctx.WithGasMeter(sdk.NewGasMeter(190000))
 	require.PanicsWithValue(t, sdk.ErrorOutOfGas{Descriptor: "PER_VALIDATOR_REQUEST_FEE"}, func() { k.PrepareRequest(ctx, &m) })
 	m = types.NewMsgRequestData(1, BasicCalldata, 1, 1, BasicClientID, testapp.Alice.Address)
-	ctx = ctx.WithGasMeter(sdk.NewGasMeter(190000))
+	ctx = ctx.WithGasMeter(sdk.NewGasMeter(250000))
 	err := k.PrepareRequest(ctx, &m)
 	require.NoError(t, err)
 }
@@ -265,7 +276,7 @@ func TestResolveRequestSuccess(t *testing.T) {
 		sdk.NewAttribute(types.AttributeKeyID, "42"),
 		sdk.NewAttribute(types.AttributeKeyResolveStatus, "1"),
 		sdk.NewAttribute(types.AttributeKeyResult, "62656562"), // hex of "beeb"
-		sdk.NewAttribute(types.AttributeKeyGasUsed, "260"),
+		sdk.NewAttribute(types.AttributeKeyGasUsed, "1028"),    // TODO might change
 	)}, ctx.EventManager().Events())
 }
 
@@ -313,7 +324,7 @@ func TestResolveRequestSuccessComplex(t *testing.T) {
 		sdk.NewAttribute(types.AttributeKeyID, "42"),
 		sdk.NewAttribute(types.AttributeKeyResolveStatus, "1"),
 		sdk.NewAttribute(types.AttributeKeyResult, "000000206265656264317631626565626431763262656562643276316265656264327632"),
-		sdk.NewAttribute(types.AttributeKeyGasUsed, "8738"),
+		sdk.NewAttribute(types.AttributeKeyGasUsed, "13634"), // todo might change
 	)}, ctx.EventManager().Events())
 }
 
@@ -361,7 +372,7 @@ func TestResolveReadNilExternalData(t *testing.T) {
 		sdk.NewAttribute(types.AttributeKeyID, "42"),
 		sdk.NewAttribute(types.AttributeKeyResolveStatus, "1"),
 		sdk.NewAttribute(types.AttributeKeyResult, "0000001062656562643176326265656264327631"),
-		sdk.NewAttribute(types.AttributeKeyGasUsed, "7757"),
+		sdk.NewAttribute(types.AttributeKeyGasUsed, "12653"),
 	)}, ctx.EventManager().Events())
 }
 

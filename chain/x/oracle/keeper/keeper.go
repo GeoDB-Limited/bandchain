@@ -84,9 +84,17 @@ func (k Keeper) GetParams(ctx sdk.Context) (params types.Params) {
 	return params
 }
 
+func (k Keeper) SetDataProviderRewardPerByteParam(ctx sdk.Context, value types.CoinDecProto) {
+	k.paramSpace.Set(ctx, types.KeyDataProviderRewardPerByte, value)
+}
+
 func (k Keeper) GetDataProviderRewardPerByteParam(ctx sdk.Context) (res types.CoinDecProto) {
 	k.paramSpace.Get(ctx, types.KeyDataProviderRewardPerByte, &res)
 	return res
+}
+
+func (k Keeper) SetDataRequesterBasicFeeParam(ctx sdk.Context, value types.CoinProto) {
+	k.paramSpace.Set(ctx, types.KeyDataRequesterBasicFee, value)
 }
 
 func (k Keeper) GetDataRequesterBasicFeeParam(ctx sdk.Context) (res types.CoinProto) {

@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"github.com/GeoDB-Limited/odincore/chain/x/oracle/utils"
 	"github.com/cosmos/cosmos-sdk/x/bank"
+	"strings"
 	"testing"
 	"time"
 
@@ -322,6 +323,10 @@ func TestRequestDataFail(t *testing.T) {
 	res, err = oracle.NewHandler(k)(ctx, types.NewMsgRequestData(999, []byte("beeb"), 2, 2, "CID", testapp.Alice.Address))
 	require.EqualError(t, err, "oracle script not found: id: 999")
 	require.Nil(t, res)
+	// Too large calldata
+	res, err = oracle.NewHandler(k)(ctx, types.NewMsgRequestData(999, []byte(strings.Repeat("a", 2000)), 2, 2, "CID", testapp.Alice.Address))
+	require.EqualError(t, err, "too large calldata: got: 2000, max: 1024")
+	require.Nil(t, res)
 }
 
 func TestReportSuccess(t *testing.T) {
@@ -428,6 +433,12 @@ func TestReportFail(t *testing.T) {
 	k.SetRequestLastExpired(ctx, 42)
 	res, err = oracle.NewHandler(k)(ctx, types.NewMsgReportData(42, reports, testapp.Validator1.ValAddress, testapp.Validator1.Address))
 	require.EqualError(t, err, "request already expired")
+	require.Nil(t, res)
+	// Too large report data
+	k.SetRequestLastExpired(ctx, 0)
+	reports = []types.RawReport{types.NewRawReport(1, 0, []byte(strings.Repeat("1", 2000))), types.NewRawReport(2, 0, []byte(strings.Repeat("2", 2000)))}
+	res, err = oracle.NewHandler(k)(ctx, types.NewMsgReportData(1, reports, testapp.Validator1.ValAddress, testapp.Validator1.Address))
+	require.EqualError(t, err, "too large raw report data: got: 2000, max: 1024")
 	require.Nil(t, res)
 }
 

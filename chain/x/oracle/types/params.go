@@ -21,6 +21,8 @@ const (
 	DefaultSamplingTryCount           = uint64(3)
 	DefaultOracleRewardPercentage     = uint64(70)
 	DefaultInactivePenaltyDuration    = uint64(10 * time.Minute)
+	DefaultMaxDataSize                = uint64(1 * 1024) // 1 KB
+	DefaultMaxCalldataSize            = uint64(1 * 1024) // 1 KB
 	DefaultDataProviderRewardDenom    = "geo"
 	DefaultDataRequesterBasicFeeDenom = "odin"
 )
@@ -42,6 +44,8 @@ var (
 	KeySamplingTryCount          = []byte("SamplingTryCount")
 	KeyOracleRewardPercentage    = []byte("OracleRewardPercentage")
 	KeyInactivePenaltyDuration   = []byte("InactivePenaltyDuration")
+	KeyMaxDataSize               = []byte("MaxDataSize")
+	KeyMaxCalldataSize           = []byte("MaxCalldataSize")
 	KeyDataProviderRewardPerByte = []byte("DataProviderRewardPerByte")
 	KeyDataRequesterBasicFee     = []byte("DataRequesterBasicFee")
 )
@@ -84,6 +88,8 @@ func (p *Params) ParamSetPairs() params.ParamSetPairs {
 		params.NewParamSetPair(KeySamplingTryCount, &p.SamplingTryCount, validateUint64("sampling try count", true)),
 		params.NewParamSetPair(KeyOracleRewardPercentage, &p.OracleRewardPercentage, validateUint64("oracle reward percentage", false)),
 		params.NewParamSetPair(KeyInactivePenaltyDuration, &p.InactivePenaltyDuration, validateUint64("inactive penalty duration", false)),
+		params.NewParamSetPair(KeyMaxDataSize, &p.MaxDataSize, validateUint64("max data size", true)),
+		params.NewParamSetPair(KeyMaxCalldataSize, &p.MaxCalldataSize, validateUint64("max calldata size", true)),
 		params.NewParamSetPair(KeyDataProviderRewardPerByte, &p.DataProviderRewardPerByte, validateDataProviderRewardPerByte),
 		params.NewParamSetPair(KeyDataRequesterBasicFee, &p.DataRequesterBasicFee, validateDataRequesterFee),
 	}
@@ -100,6 +106,8 @@ func DefaultParams() Params {
 		DefaultSamplingTryCount,
 		DefaultOracleRewardPercentage,
 		DefaultInactivePenaltyDuration,
+		DefaultMaxDataSize,
+		DefaultMaxCalldataSize,
 		DefaultDataProviderRewardPerByte,
 		DefaultDataRequesterBasicFee,
 	)

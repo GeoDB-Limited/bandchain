@@ -176,7 +176,7 @@ func TestMsgEditOracleScriptValidation(t *testing.T) {
 func TestMsgRequestDataValidation(t *testing.T) {
 	performValidateTests(t, []validateTestCase{
 		{true, NewMsgRequestData(1, []byte("calldata"), 10, 5, "client-id", GoodTestAddr)},
-		{false, NewMsgRequestData(1, []byte(strings.Repeat("x", 2000)), 10, 5, "client-id", GoodTestAddr)},
+		{true, NewMsgRequestData(1, []byte(strings.Repeat("x", 2000)), 10, 5, "client-id", GoodTestAddr)},
 		{false, NewMsgRequestData(1, []byte("calldata"), 2, 5, "client-id", GoodTestAddr)},
 		{false, NewMsgRequestData(1, []byte("calldata"), 0, 0, "client-id", GoodTestAddr)},
 		{false, NewMsgRequestData(1, []byte("calldata"), 10, 5, strings.Repeat("x", 300), GoodTestAddr)},
