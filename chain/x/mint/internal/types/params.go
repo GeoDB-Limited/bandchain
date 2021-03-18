@@ -27,9 +27,9 @@ type Params struct {
 	InflationMax        sdk.Dec `json:"inflation_max" yaml:"inflation_max"`                 // maximum inflation rate
 	InflationMin        sdk.Dec `json:"inflation_min" yaml:"inflation_min"`                 // minimum inflation rate
 	GoalBonded          sdk.Dec `json:"goal_bonded" yaml:"goal_bonded"`                     // goal of percent bonded atoms
+	MintLimit           sdk.Int `json:"mint_limit" yaml:"mint_limit"`                       // limit for one withdraw
 	BlocksPerYear       uint64  `json:"blocks_per_year" yaml:"blocks_per_year"`             // expected blocks per year
 	MintAir             bool    `json:"mint_air" yaml:"mint_air"`                           // flag if mint from air
-	MintLimit           uint64  `json:"mint_limit" yaml:"mint_limit"`                       // limit for one withdraw
 }
 
 // ParamTable for minting module.
@@ -40,7 +40,8 @@ func ParamKeyTable() params.KeyTable {
 func NewParams(
 	mintDenom string,
 	inflationRateChange, inflationMax, inflationMin, goalBonded sdk.Dec,
-	mintLimit, blocksPerYear uint64,
+	mintLimit sdk.Int,
+	blocksPerYear uint64,
 	mintAir bool,
 ) Params {
 
@@ -66,7 +67,7 @@ func DefaultParams() Params {
 		GoalBonded:          sdk.NewDecWithPrec(67, 2),
 		BlocksPerYear:       uint64(60 * 60 * 8766 / 5), // assuming 5 second block times
 		MintAir:             false,
-		MintLimit:           1000000000000000000,
+		MintLimit:           sdk.NewInt(1000000000000000000),
 	}
 }
 
@@ -216,6 +217,18 @@ func validateGoalBonded(i interface{}) error {
 	return nil
 }
 
+func validateMintLimit(i interface{}) error {
+	v, ok := i.(sdk.Int)
+	if !ok {
+		return fmt.Errorf("invalid parameter type: %T", i)
+	}
+	if v.IsNegative() {
+		return fmt.Errorf("minting limit cannot be negative: %s", v)
+	}
+
+	return nil
+}
+
 func validateBlocksPerYear(i interface{}) error {
 	v, ok := i.(uint64)
 	if !ok {
@@ -224,15 +237,6 @@ func validateBlocksPerYear(i interface{}) error {
 
 	if v == 0 {
 		return fmt.Errorf("blocks per year must be positive: %d", v)
-	}
-
-	return nil
-}
-
-func validateMintLimit(i interface{}) error {
-	_, ok := i.(uint64)
-	if !ok {
-		return fmt.Errorf("invalid parameter type: %T", i)
 	}
 
 	return nil

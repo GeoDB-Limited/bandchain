@@ -144,12 +144,17 @@ func (k Keeper) IsEligibleAccount(ctx sdk.Context, acc sdk.AccAddress) bool {
 	return accPool.Contains(acc)
 }
 
-// MintCoinsToAcc mints coins from module to account
-func (k Keeper) MintCoinsToAcc(ctx sdk.Context, recipientAddr sdk.AccAddress, newCoins sdk.Coins) error {
-	if newCoins.Empty() {
-		// skip as no coins need to be minted
+// IsValidLimit checks that minting amount does not exceed the limit
+func (k Keeper) IsValidLimit(ctx sdk.Context, coin sdk.Coin) bool {
+	moduleParams := k.GetParams(ctx)
+	return coin.Amount.LTE(moduleParams.MintLimit)
+}
+
+// MintCoinToAcc mints coins from module to account
+func (k Keeper) MintCoinToAcc(ctx sdk.Context, recipient sdk.AccAddress, coin sdk.Coin) error {
+	if coin.IsZero() {
 		return nil
 	}
 
-	return k.supplyKeeper.MintCoinsToAcc(ctx, types.ModuleName, recipientAddr, newCoins)
+	return k.supplyKeeper.MintCoinsToAcc(ctx, types.ModuleName, recipient, sdk.NewCoins(coin))
 }

@@ -12,13 +12,14 @@ func InitGenesis(ctx sdk.Context, keeper Keeper, supplyKeeper types.SupplyKeeper
 	keeper.SetParams(ctx, data.Params)
 	keeper.SetAccPool(ctx, data.AccPool)
 
-	moduleAcc := keeper.GetMinterAccount(ctx)
-	if moduleAcc == nil {
+	mintAcc := keeper.GetMintAccount(ctx)
+	if mintAcc == nil {
 		panic(fmt.Sprintf("%s module account has not been set", ModuleName))
 	}
 
-	// TODO: give 50%
-	supplyKeeper.SetModuleAccount(ctx, moduleAcc)
+	if mintAcc.GetCoins().IsZero() {
+		supplyKeeper.SetModuleAccount(ctx, mintAcc)
+	}
 }
 
 // ExportGenesis returns a GenesisState for a given context and keeper.

@@ -11,29 +11,32 @@ func NewHandler(k Keeper) sdk.Handler {
 	return func(ctx sdk.Context, msg sdk.Msg) (*sdk.Result, error) {
 		ctx = ctx.WithEventManager(sdk.NewEventManager())
 		switch msg := msg.(type) {
-		case MsgMintCoinsToAcc:
-			return handleMintCoinsToAcc(ctx, k, msg)
+		case MsgMintCoinToAcc:
+			return handleMintCoinToAcc(ctx, k, msg)
 		default:
 			return nil, sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "unrecognized %s message type: %T", ModuleName, msg)
 		}
 	}
 }
 
-// handleMintCoinsToAcc handles MsgMintCoinsToAcc
-func handleMintCoinsToAcc(ctx sdk.Context, k Keeper, msg MsgMintCoinsToAcc) (*sdk.Result, error) {
+// handleMintCoinToAcc handles MsgMintCoinToAcc
+func handleMintCoinToAcc(ctx sdk.Context, k Keeper, msg MsgMintCoinToAcc) (*sdk.Result, error) {
 	if !k.IsEligibleAccount(ctx, msg.Sender) {
 		return nil, sdkerrors.Wrapf(types.ErrAccountIsNotEligible, "account: %s", msg.Sender)
 	}
+	if !k.IsValidLimit(ctx, msg.Amount) {
+		return nil, sdkerrors.Wrapf(types.ErrExceedsMintLimit, "amount: %s", msg.Amount)
+	}
 
-	err := k.MintCoinsToAcc(ctx, msg.Depositor, msg.Amount)
+	err := k.MintCoinToAcc(ctx, msg.Receiver, msg.Amount)
 	if err != nil {
-		return nil, sdkerrors.Wrapf(err, "failed to mint %s coins to account %s", msg.Amount, msg.Depositor)
+		return nil, sdkerrors.Wrapf(err, "failed to mint %s coins to account %s", msg.Amount, msg.Receiver)
 	}
 
 	ctx.EventManager().EmitEvent(sdk.NewEvent(
 		types.EventTypeMint,
 		sdk.NewAttribute(types.AttributeKeyMintAmount, msg.Amount.String()),
-		sdk.NewAttribute(types.AttributeKeyDepositor, msg.Depositor.String()),
+		sdk.NewAttribute(types.AttributeKeyReceiver, msg.Receiver.String()),
 		sdk.NewAttribute(types.AttributeKeySender, msg.Sender.String()),
 	))
 

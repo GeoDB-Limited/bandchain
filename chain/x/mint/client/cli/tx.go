@@ -15,8 +15,8 @@ import (
 )
 
 const (
-	flagDepositor = "depositor"
-	flagAmount    = "amount"
+	flagReceiver = "receiver"
+	flagAmount   = "amount"
 )
 
 // GetTxCmd returns the transaction commands for this module.
@@ -28,50 +28,50 @@ func GetTxCmd(cdc *codec.Codec) *cobra.Command {
 		SuggestionsMinimumDistance: 2,
 		RunE:                       client.ValidateCmd,
 	}
-	mintCmd.AddCommand(flags.PostCommands(GetCmdMintCoinsToAcc(cdc))...)
+	mintCmd.AddCommand(flags.PostCommands(GetCmdMintCoinToAcc(cdc))...)
 
 	return mintCmd
 }
 
-// GetCmdMintCoinsToAcc implements minting transaction command.
-func GetCmdMintCoinsToAcc(cdc *codec.Codec) *cobra.Command {
+// GetCmdMintCoinToAcc implements minting transaction command.
+func GetCmdMintCoinToAcc(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "mint-tokens (--depositor [depositor]) (--amount [amount])",
-		Short: "Mint some tokens for account",
+		Use:   "mint-coins (--receiver [receiver]) (--amount [amount])",
+		Short: "Mint some coins for account",
 		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			inBuf := bufio.NewReader(cmd.InOrStdin())
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 			txBldr := auth.NewTxBuilderFromCLI(inBuf).WithTxEncoder(utils.GetTxEncoder(cdc))
 
-			depositorStr, err := cmd.Flags().GetString(flagDepositor)
+			receiverStr, err := cmd.Flags().GetString(flagReceiver)
 			if err != nil {
-				return sdkerrors.Wrapf(err, "flag: %s", flagDepositor)
+				return sdkerrors.Wrapf(err, "flag: %s", flagReceiver)
 			}
-			depositor, err := sdk.AccAddressFromBech32(depositorStr)
+			receiver, err := sdk.AccAddressFromBech32(receiverStr)
 			if err != nil {
-				return sdkerrors.Wrapf(err, "depositor: %s", depositorStr)
+				return sdkerrors.Wrapf(err, "receiver: %s", receiverStr)
 			}
 
 			amountStr, err := cmd.Flags().GetString(flagAmount)
 			if err != nil {
 				return sdkerrors.Wrapf(err, "flag: %s", flagAmount)
 			}
-			amount, err := sdk.ParseCoins(amountStr)
+			amount, err := sdk.ParseCoin(amountStr)
 			if err != nil {
 				return sdkerrors.Wrapf(err, "amount: %s", amountStr)
 			}
 
-			msg := types.NewMsgMintCoinsToAcc(amount, depositor, cliCtx.GetFromAddress())
+			msg := types.NewMsgMintCoinToAcc(amount, receiver, cliCtx.GetFromAddress())
 			if err := msg.ValidateBasic(); err != nil {
-				return sdkerrors.Wrapf(err, "amount: %s depositor: %s", amount, depositorStr)
+				return sdkerrors.Wrapf(err, "amount: %s receiver: %s", amount, receiverStr)
 			}
 
 			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg})
 		},
 	}
 
-	cmd.Flags().String(flagDepositor, "", "Depositor")
+	cmd.Flags().String(flagReceiver, "", "Receiver of minted coins")
 	cmd.Flags().String(flagAmount, "", "Amount to mint")
 
 	return cmd

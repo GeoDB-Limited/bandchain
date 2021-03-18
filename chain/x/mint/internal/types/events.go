@@ -8,6 +8,6 @@ const (
 	AttributeKeyInflation        = "inflation"
 	AttributeKeyAnnualProvisions = "annual_provisions"
 	AttributeKeySender           = "sender"
-	AttributeKeyDepositor        = "depositor"
+	AttributeKeyReceiver         = "receiver"
 	AttributeKeyMintAmount       = "minting_amount"
 )

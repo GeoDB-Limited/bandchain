@@ -4,11 +4,15 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 )
 
-// ModuleCdc is a generic sealed codec to be used throughout this module
-var ModuleCdc *codec.Codec
+// ModuleCdc is the codec for the module.
+var ModuleCdc = codec.New()
 
 func init() {
-	ModuleCdc = codec.New()
+	RegisterCodec(ModuleCdc)
+}
+
+// RegisterCodec registers the module's concrete types on the codec.
+func RegisterCodec(cdc *codec.Codec) {
 	codec.RegisterCrypto(ModuleCdc)
-	ModuleCdc.Seal()
+	cdc.RegisterConcrete(MsgMintCoinToAcc{}, "oracle/MintCoinToAcc", nil)
 }
