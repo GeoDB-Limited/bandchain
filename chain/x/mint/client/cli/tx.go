@@ -2,7 +2,6 @@ package cli
 
 import (
 	"bufio"
-	"fmt"
 	"github.com/GeoDB-Limited/odincore/chain/x/mint/internal/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/context"
@@ -29,13 +28,13 @@ func GetTxCmd(cdc *codec.Codec) *cobra.Command {
 		SuggestionsMinimumDistance: 2,
 		RunE:                       client.ValidateCmd,
 	}
-	mintCmd.AddCommand(flags.PostCommands(GetCmdMintTokens(cdc))...)
+	mintCmd.AddCommand(flags.PostCommands(GetCmdMintCoinsToAcc(cdc))...)
 
 	return mintCmd
 }
 
-// GetCmdMintTokens implements minting transaction command.
-func GetCmdMintTokens(cdc *codec.Codec) *cobra.Command {
+// GetCmdMintCoinsToAcc implements minting transaction command.
+func GetCmdMintCoinsToAcc(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "mint-tokens (--depositor [depositor]) (--amount [amount])",
 		Short: "Mint some tokens for account",
@@ -47,25 +46,25 @@ func GetCmdMintTokens(cdc *codec.Codec) *cobra.Command {
 
 			depositorStr, err := cmd.Flags().GetString(flagDepositor)
 			if err != nil {
-				return sdkerrors.Wrapf(err, fmt.Sprintf("flag: %s", flagDepositor))
+				return sdkerrors.Wrapf(err, "flag: %s", flagDepositor)
 			}
 			depositor, err := sdk.AccAddressFromBech32(depositorStr)
 			if err != nil {
-				return sdkerrors.Wrapf(err, fmt.Sprintf("depositor: %s", depositorStr))
+				return sdkerrors.Wrapf(err, "depositor: %s", depositorStr)
 			}
 
 			amountStr, err := cmd.Flags().GetString(flagAmount)
 			if err != nil {
-				return sdkerrors.Wrapf(err, fmt.Sprintf("flag: %s", flagAmount))
+				return sdkerrors.Wrapf(err, "flag: %s", flagAmount)
 			}
-			amount, ok := sdk.NewIntFromString(amountStr)
-			if !ok {
-				return sdkerrors.Wrapf(types.ErrInvalidAmountToMint, fmt.Sprintf("amount: %s", amountStr))
+			amount, err := sdk.ParseCoins(amountStr)
+			if err != nil {
+				return sdkerrors.Wrapf(err, "amount: %s", amountStr)
 			}
 
-			msg := types.NewMsgMintTokens(amount, depositor, cliCtx.GetFromAddress())
+			msg := types.NewMsgMintCoinsToAcc(amount, depositor, cliCtx.GetFromAddress())
 			if err := msg.ValidateBasic(); err != nil {
-				return sdkerrors.Wrapf(err, fmt.Sprintf("amount: %s depositor: %s", amount, depositorStr))
+				return sdkerrors.Wrapf(err, "amount: %s depositor: %s", amount, depositorStr)
 			}
 
 			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg})

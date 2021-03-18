@@ -9,5 +9,5 @@ const (
 	AttributeKeyAnnualProvisions = "annual_provisions"
 	AttributeKeySender           = "sender"
 	AttributeKeyDepositor        = "depositor"
-	AttributeKeyMintAmount       = "mint_amount"
+	AttributeKeyMintAmount       = "minting_amount"
 )
