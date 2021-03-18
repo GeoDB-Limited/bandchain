@@ -1,12 +1,11 @@
 package types
 
 import (
-	"errors"
 	"fmt"
-	"strings"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/x/params"
+	"strings"
 )
 
 // Parameter store keys
@@ -18,6 +17,7 @@ var (
 	KeyGoalBonded          = []byte("GoalBonded")
 	KeyBlocksPerYear       = []byte("BlocksPerYear")
 	KeyMintAir             = []byte("MintAir")
+	KeyMintLimit           = []byte("MintLimit")
 )
 
 // mint parameters
@@ -28,7 +28,8 @@ type Params struct {
 	InflationMin        sdk.Dec `json:"inflation_min" yaml:"inflation_min"`                 // minimum inflation rate
 	GoalBonded          sdk.Dec `json:"goal_bonded" yaml:"goal_bonded"`                     // goal of percent bonded atoms
 	BlocksPerYear       uint64  `json:"blocks_per_year" yaml:"blocks_per_year"`             // expected blocks per year
-	MintAir             bool    `json:"mint_air" yaml:"mint_air"`
+	MintAir             bool    `json:"mint_air" yaml:"mint_air"`                           // flag if mint from air
+	MintLimit           uint64  `json:"mint_limit" yaml:"mint_limit"`                       // limit for one withdraw
 }
 
 // ParamTable for minting module.
@@ -37,7 +38,10 @@ func ParamKeyTable() params.KeyTable {
 }
 
 func NewParams(
-	mintDenom string, inflationRateChange, inflationMax, inflationMin, goalBonded sdk.Dec, blocksPerYear uint64, mintAir bool,
+	mintDenom string,
+	inflationRateChange, inflationMax, inflationMin, goalBonded sdk.Dec,
+	mintLimit, blocksPerYear uint64,
+	mintAir bool,
 ) Params {
 
 	return Params{
@@ -48,6 +52,7 @@ func NewParams(
 		GoalBonded:          goalBonded,
 		BlocksPerYear:       blocksPerYear,
 		MintAir:             mintAir,
+		MintLimit:           mintLimit,
 	}
 }
 
@@ -61,6 +66,7 @@ func DefaultParams() Params {
 		GoalBonded:          sdk.NewDecWithPrec(67, 2),
 		BlocksPerYear:       uint64(60 * 60 * 8766 / 5), // assuming 5 second block times
 		MintAir:             false,
+		MintLimit:           1000000000000000000,
 	}
 }
 
@@ -87,6 +93,9 @@ func (p Params) Validate() error {
 	if err := validateMintAir(p.MintAir); err != nil {
 		return err
 	}
+	if err := validateMintLimit(p.MintLimit); err != nil {
+		return err
+	}
 	if p.InflationMax.LT(p.InflationMin) {
 		return fmt.Errorf(
 			"max inflation (%s) must be greater than or equal to min inflation (%s)",
@@ -100,15 +109,16 @@ func (p Params) Validate() error {
 
 func (p Params) String() string {
 	return fmt.Sprintf(`Minting Params:
-  Mint Denom:             %s
-  Inflation Rate Change:  %s
-  Inflation Max:          %s
-  Inflation Min:          %s
-  Goal Bonded:            %s
-  Blocks Per Year:        %d
+	Mint Denom:             %s
+	Inflation Rate Change:  %s
+	Inflation Max:          %s
+	Inflation Min:          %s
+	Goal Bonded:            %s
+	Blocks Per Year:        %d
+	Mint Limit:				%d
 `,
 		p.MintDenom, p.InflationRateChange, p.InflationMax,
-		p.InflationMin, p.GoalBonded, p.BlocksPerYear,
+		p.InflationMin, p.GoalBonded, p.BlocksPerYear, p.MintLimit,
 	)
 }
 
@@ -122,6 +132,7 @@ func (p *Params) ParamSetPairs() params.ParamSetPairs {
 		params.NewParamSetPair(KeyGoalBonded, &p.GoalBonded, validateGoalBonded),
 		params.NewParamSetPair(KeyBlocksPerYear, &p.BlocksPerYear, validateBlocksPerYear),
 		params.NewParamSetPair(KeyMintAir, &p.MintAir, validateMintAir),
+		params.NewParamSetPair(KeyMintLimit, &p.MintLimit, validateMintLimit),
 	}
 }
 
@@ -132,7 +143,7 @@ func validateMintDenom(i interface{}) error {
 	}
 
 	if strings.TrimSpace(v) == "" {
-		return errors.New("mint denom cannot be blank")
+		return sdkerrors.Wrap(ErrInvalidMintDenom, "mint denom cannot be blank")
 	}
 	if err := sdk.ValidateDenom(v); err != nil {
 		return err
@@ -213,6 +224,15 @@ func validateBlocksPerYear(i interface{}) error {
 
 	if v == 0 {
 		return fmt.Errorf("blocks per year must be positive: %d", v)
+	}
+
+	return nil
+}
+
+func validateMintLimit(i interface{}) error {
+	_, ok := i.(uint64)
+	if !ok {
+		return fmt.Errorf("invalid parameter type: %T", i)
 	}
 
 	return nil

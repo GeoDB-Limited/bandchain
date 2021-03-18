@@ -69,8 +69,8 @@ func (k Keeper) SetMinter(ctx sdk.Context, minter types.Minter) {
 	store.Set(types.MinterKey, b)
 }
 
-// GetMinterAccount returns the mint ModuleAccount
-func (k Keeper) GetMinterAccount(ctx sdk.Context) exported.ModuleAccountI {
+// GetMintAccount returns the mint ModuleAccount
+func (k Keeper) GetMintAccount(ctx sdk.Context) exported.ModuleAccountI {
 	return k.supplyKeeper.GetModuleAccount(ctx, types.ModuleName)
 }
 
