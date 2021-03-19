@@ -2,12 +2,11 @@ package mint
 
 import (
 	"fmt"
-	"github.com/GeoDB-Limited/odincore/chain/x/mint/internal/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // InitGenesis new mint genesis
-func InitGenesis(ctx sdk.Context, keeper Keeper, supplyKeeper types.SupplyKeeper, data GenesisState) {
+func InitGenesis(ctx sdk.Context, keeper Keeper, data GenesisState) {
 	keeper.SetMinter(ctx, data.Minter)
 	keeper.SetParams(ctx, data.Params)
 
@@ -16,12 +15,11 @@ func InitGenesis(ctx sdk.Context, keeper Keeper, supplyKeeper types.SupplyKeeper
 		panic(fmt.Sprintf("%s module account has not been set", ModuleName))
 	}
 
-	moduleHoldings, _ := data.MintPool.TreasuryPool.TruncateDecimal()
 	if moduleAcc.GetCoins().IsZero() {
-		if err := moduleAcc.SetCoins(moduleHoldings); err != nil {
+		if err := moduleAcc.SetCoins(data.MintPool.TreasuryPool); err != nil {
 			panic(err)
 		}
-		supplyKeeper.SetModuleAccount(ctx, moduleAcc)
+		keeper.SetMintAccount(ctx, moduleAcc)
 	}
 
 	keeper.SetMintPool(ctx, data.MintPool)

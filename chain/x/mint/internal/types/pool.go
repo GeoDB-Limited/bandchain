@@ -7,14 +7,14 @@ import (
 
 // MintPool
 type MintPool struct {
-	TreasuryPool sdk.DecCoins `json:"treasury_pool" yaml:"treasury_pool"`
-	EligiblePool AddrPool     `json:"eligible_accounts_pool" yaml:"eligible_accounts_pool"` // eligible to mint accounts
+	TreasuryPool sdk.Coins `json:"treasury_pool" yaml:"treasury_pool"`
+	EligiblePool AddrPool  `json:"eligible_accounts_pool" yaml:"eligible_accounts_pool"` // eligible to mint accounts
 }
 
 // InitialMintPool returns the initial state of MintPool
 func InitialMintPool() MintPool {
 	return MintPool{
-		TreasuryPool: sdk.DecCoins{},
+		TreasuryPool: sdk.Coins{},
 		EligiblePool: AddrPool{},
 	}
 }
@@ -32,8 +32,8 @@ func (m MintPool) ValidateGenesis() error {
 type AddrPool []sdk.AccAddress
 
 // Contains checks id addr exists in the slice
-func (p *AddrPool) Contains(addr sdk.AccAddress) bool {
-	for _, item := range *p {
+func (p AddrPool) Contains(addr sdk.AccAddress) bool {
+	for _, item := range p {
 		if item.Equals(addr) {
 			return true
 		}

@@ -86,7 +86,7 @@ func RandomizedGenState(simState *module.SimulationState) {
 
 	mintDenom := sdk.DefaultBondDenom
 	blocksPerYear := uint64(60 * 60 * 8766 / 5)
-	mintMax := sdk.Coins{}
+	MaxWithdrawalPerTime := sdk.Coins{}
 
 	params := types.NewParams(
 		mintDenom,
@@ -94,12 +94,12 @@ func RandomizedGenState(simState *module.SimulationState) {
 		inflationMax,
 		inflationMin,
 		goalBonded,
-		mintMax,
+		MaxWithdrawalPerTime,
 		blocksPerYear,
 		mintAir,
 	)
 
-	mintGenesis := types.NewGenesisState(types.InitialMinter(inflation), params, types.MintPool{})
+	mintGenesis := types.NewGenesisState(types.InitialMinter(inflation), params, types.InitialMintPool())
 
 	fmt.Printf("Selected randomly generated minting parameters:\n%s\n", codec.MustMarshalJSONIndent(simState.Cdc, mintGenesis))
 	simState.GenState[types.ModuleName] = simState.Cdc.MustMarshalJSON(mintGenesis)

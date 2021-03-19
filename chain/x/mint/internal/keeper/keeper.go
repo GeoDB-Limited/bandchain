@@ -3,6 +3,7 @@ package keeper
 import (
 	"fmt"
 	"github.com/GeoDB-Limited/odincore/chain/x/mint/internal/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/x/supply/exported"
 
 	"github.com/tendermint/tendermint/libs/log"
@@ -72,6 +73,11 @@ func (k Keeper) SetMinter(ctx sdk.Context, minter types.Minter) {
 // GetMintAccount returns the mint ModuleAccount
 func (k Keeper) GetMintAccount(ctx sdk.Context) exported.ModuleAccountI {
 	return k.supplyKeeper.GetModuleAccount(ctx, types.ModuleName)
+}
+
+// SetMintAccount sets the module account
+func (k Keeper) SetMintAccount(ctx sdk.Context, moduleAcc exported.ModuleAccountI) {
+	k.supplyKeeper.SetModuleAccount(ctx, moduleAcc)
 }
 
 //__________________________________________________________________________
@@ -144,17 +150,30 @@ func (k Keeper) IsEligibleAccount(ctx sdk.Context, acc sdk.AccAddress) bool {
 	return mintPool.EligiblePool.Contains(acc)
 }
 
-// IsExceedsLimit checks if minting amount exceeds the limit
-func (k Keeper) IsExceedsLimit(ctx sdk.Context, amt sdk.Coins) bool {
+// LimitExceeded checks if withdrawal amount exceeds the limit
+func (k Keeper) LimitExceeded(ctx sdk.Context, amt sdk.Coins) bool {
 	moduleParams := k.GetParams(ctx)
-	return amt.IsAnyGT(moduleParams.MintMax)
+	return amt.IsAnyGT(moduleParams.MaxWithdrawalPerTime)
 }
 
-// MintCoinsToAcc mints coins from module to account
-func (k Keeper) MintCoinsToAcc(ctx sdk.Context, recipient sdk.AccAddress, amt sdk.Coins) error {
-	if amt.Empty() {
-		return nil
+// WithdrawCoinsToAccFromTreasury withdraws coins from module to account
+func (k Keeper) WithdrawCoinsToAccFromTreasury(ctx sdk.Context, receiver sdk.AccAddress, amt sdk.Coins) error {
+	if err := k.supplyKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, receiver, amt); err != nil {
+		return sdkerrors.Wrapf(err, "failed to mint %s from %s module account", amt.String(), types.ModuleName)
 	}
 
-	return k.supplyKeeper.MintCoinsToAcc(ctx, types.ModuleName, recipient, amt)
+	mintPool := k.GetMintPool(ctx)
+	if amt.IsAllGT(mintPool.TreasuryPool) {
+		return sdkerrors.Wrapf(
+			types.ErrWithdrawalAmountExceedsModuleBalance,
+			"withdrawal amount: %s exceeds %s module balance",
+			amt.String(),
+			types.ModuleName,
+		)
+	}
+
+	mintPool.TreasuryPool = mintPool.TreasuryPool.Sub(amt)
+	k.SetMintPool(ctx, mintPool)
+
+	return nil
 }

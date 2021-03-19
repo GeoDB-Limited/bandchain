@@ -24,20 +24,20 @@ func GetTxCmd(cdc *codec.Codec) *cobra.Command {
 	mintCmd := &cobra.Command{
 		Use:                        types.ModuleName,
 		Short:                      "mint transaction subcommands",
-		DisableFlagParsing:         true,
+		DisableFlagParsing: true,
 		SuggestionsMinimumDistance: 2,
 		RunE:                       client.ValidateCmd,
 	}
-	mintCmd.AddCommand(flags.PostCommands(GetCmdMintCoinsToAcc(cdc))...)
+	mintCmd.AddCommand(flags.PostCommands(GetCmdMsgWithdrawCoinsToAccFromTreasury(cdc))...)
 
 	return mintCmd
 }
 
-// GetCmdMintCoinsToAcc implements minting transaction command.
-func GetCmdMintCoinsToAcc(cdc *codec.Codec) *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "mint-coins (--receiver [receiver]) (--amount [amount])",
-		Short: "Mint some coins for account",
+// GetCmdMsgWithdrawCoinsToAccFromTreasury implements minting transaction command.
+func GetCmdMsgWithdrawCoinsToAccFromTreasury(cdc *codec.Codec) *cobra.Command {
+	return &cobra.Command{
+		Use:   "withdraw-coins (--receiver [receiver]) (--amount [amount])",
+		Short: "Withdraw some coins for account",
 		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			inBuf := bufio.NewReader(cmd.InOrStdin())
@@ -62,7 +62,7 @@ func GetCmdMintCoinsToAcc(cdc *codec.Codec) *cobra.Command {
 				return sdkerrors.Wrapf(err, "amount: %s", amountStr)
 			}
 
-			msg := types.NewMsgMintCoinsToAcc(amount, receiver, cliCtx.GetFromAddress())
+			msg := types.NewMsgMsgWithdrawCoinsToAccFromTreasury(amount, receiver, cliCtx.GetFromAddress())
 			if err := msg.ValidateBasic(); err != nil {
 				return sdkerrors.Wrapf(err, "amount: %s receiver: %s", amount, receiverStr)
 			}
@@ -70,9 +70,4 @@ func GetCmdMintCoinsToAcc(cdc *codec.Codec) *cobra.Command {
 			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg})
 		},
 	}
-
-	cmd.Flags().String(flagReceiver, "", "Receiver of minted coins")
-	cmd.Flags().String(flagAmount, "", "Amount to mint")
-
-	return cmd
 }

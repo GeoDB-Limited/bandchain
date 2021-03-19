@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/GeoDB-Limited/odincore/chain/x/mint/client/cli"
 	"github.com/GeoDB-Limited/odincore/chain/x/mint/client/rest"
-	"github.com/GeoDB-Limited/odincore/chain/x/mint/internal/types"
 	"github.com/GeoDB-Limited/odincore/chain/x/mint/simulation"
 	"math/rand"
 
@@ -78,8 +77,7 @@ func (AppModuleBasic) GetQueryCmd(cdc *codec.Codec) *cobra.Command {
 // AppModule implements an application module for the mint module.
 type AppModule struct {
 	AppModuleBasic
-	supplyKeeper types.SupplyKeeper
-	keeper       Keeper
+	keeper Keeper
 }
 
 // NewAppModule creates a new AppModule object
@@ -99,7 +97,7 @@ func (am AppModule) RegisterInvariants(_ sdk.InvariantRegistry) {}
 // Route returns the message routing key for the mint module.
 func (AppModule) Route() string { return RouterKey }
 
-// NewHandler returns the function to process oracle messages (SDK AppModule interface).
+// NewHandler returns the function to process mint messages (SDK AppModule interface).
 func (am AppModule) NewHandler() sdk.Handler { return NewHandler(am.keeper) }
 
 // QuerierRoute returns the mint module's querier route name.
@@ -117,7 +115,7 @@ func (am AppModule) NewQuerierHandler() sdk.Querier {
 func (am AppModule) InitGenesis(ctx sdk.Context, data json.RawMessage) []abci.ValidatorUpdate {
 	var genesisState GenesisState
 	ModuleCdc.MustUnmarshalJSON(data, &genesisState)
-	InitGenesis(ctx, am.keeper, am.supplyKeeper, genesisState)
+	InitGenesis(ctx, am.keeper, genesisState)
 	return []abci.ValidatorUpdate{}
 }
 

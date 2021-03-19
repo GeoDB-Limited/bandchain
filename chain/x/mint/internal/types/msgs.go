@@ -5,19 +5,25 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
-// ensure Msg interface compliance at compile time
-var _ sdk.Msg = &MsgMintCoinsToAcc{}
+const TypeMsgWithdrawCoinsToAccFromTreasury = "withdraw_coins_from_treasury"
 
-// MsgMintCoinsToAcc defines a msg to mint some amount for receiver account
-type MsgMintCoinsToAcc struct {
+// ensure Msg interface compliance at compile time
+var _ sdk.Msg = &MsgMsgWithdrawCoinsToAccFromTreasury{}
+
+// MsgMsgWithdrawCoinsToAccFromTreasury defines a msg to mint some amount for receiver account
+type MsgMsgWithdrawCoinsToAccFromTreasury struct {
 	Amount   sdk.Coins      `json:"amount" yaml:"amount"`
 	Receiver sdk.AccAddress `json:"receiver" yaml:"receiver"`
 	Sender   sdk.AccAddress `json:"sender" yaml:"sender"`
 }
 
-// NewMsgMintCoinsToAcc returns a new MsgMintCoinsToAcc
-func NewMsgMintCoinsToAcc(amt sdk.Coins, receiver sdk.AccAddress, sender sdk.AccAddress) MsgMintCoinsToAcc {
-	return MsgMintCoinsToAcc{
+// NewMsgMsgWithdrawCoinsToAccFromTreasury returns a new MsgMsgWithdrawCoinsToAccFromTreasury
+func NewMsgMsgWithdrawCoinsToAccFromTreasury(
+	amt sdk.Coins,
+	receiver sdk.AccAddress,
+	sender sdk.AccAddress,
+) MsgMsgWithdrawCoinsToAccFromTreasury {
+	return MsgMsgWithdrawCoinsToAccFromTreasury{
 		Amount:   amt,
 		Receiver: receiver,
 		Sender:   sender,
@@ -25,17 +31,17 @@ func NewMsgMintCoinsToAcc(amt sdk.Coins, receiver sdk.AccAddress, sender sdk.Acc
 }
 
 // Route implements the sdk.Msg interface.
-func (msg MsgMintCoinsToAcc) Route() string {
+func (msg MsgMsgWithdrawCoinsToAccFromTreasury) Route() string {
 	return RouterKey
 }
 
 // Type implements the sdk.Msg interface.
-func (msg MsgMintCoinsToAcc) Type() string {
-	return "mint_coins"
+func (msg MsgMsgWithdrawCoinsToAccFromTreasury) Type() string {
+	return TypeMsgWithdrawCoinsToAccFromTreasury
 }
 
 // ValidateBasic implements the sdk.Msg interface.
-func (msg MsgMintCoinsToAcc) ValidateBasic() error {
+func (msg MsgMsgWithdrawCoinsToAccFromTreasury) ValidateBasic() error {
 	if msg.Sender.Empty() {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "sender: %s", msg.Sender)
 	}
@@ -53,11 +59,11 @@ func (msg MsgMintCoinsToAcc) ValidateBasic() error {
 }
 
 // GetSignBytes implements the sdk.Msg interface.
-func (msg MsgMintCoinsToAcc) GetSignBytes() []byte {
+func (msg MsgMsgWithdrawCoinsToAccFromTreasury) GetSignBytes() []byte {
 	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(msg))
 }
 
 // GetSigners implements the sdk.Msg interface.
-func (msg MsgMintCoinsToAcc) GetSigners() []sdk.AccAddress {
+func (msg MsgMsgWithdrawCoinsToAccFromTreasury) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{msg.Sender}
 }

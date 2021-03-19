@@ -115,31 +115,3 @@ func (k WrappedSupplyKeeper) MintCoins(ctx sdk.Context, moduleName string, amt s
 
 	return nil
 }
-
-// MintCoinsToAcc mints coins from module to account
-func (k WrappedSupplyKeeper) MintCoinsToAcc(
-	ctx sdk.Context,
-	moduleName string,
-	recipient sdk.AccAddress,
-	amt sdk.Coins,
-) error {
-	moduleAcc := k.GetModuleAccount(ctx, moduleName)
-	if moduleAcc == nil {
-		panic(sdkerrors.Wrapf(sdkerrors.ErrUnknownAddress, "module account %s does not exist", moduleName))
-	}
-
-	if !moduleAcc.HasPermission(supply.Minter) {
-		panic(sdkerrors.Wrapf(sdkerrors.ErrUnauthorized, "module account %s does not have permissions to mint tokens", moduleName))
-	}
-
-	logger := k.Logger(ctx)
-	err := k.SendCoinsFromModuleToAccount(ctx, moduleName, recipient, amt)
-	if err != nil {
-		err = sdkerrors.Wrap(err, fmt.Sprintf("failed to mint %s from %s module account", amt.String(), moduleName))
-		logger.Error(err.Error())
-		return err
-	}
-	logger.Info(fmt.Sprintf("minted %s from %s module account", amt.String(), moduleName))
-
-	return nil
-}
