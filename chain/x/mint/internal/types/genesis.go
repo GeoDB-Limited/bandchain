@@ -2,26 +2,26 @@ package types
 
 // GenesisState - minter state
 type GenesisState struct {
-	Minter  Minter  `json:"minter" yaml:"minter"`                       // minter object
-	Params  Params  `json:"params" yaml:"params"`                       // inflation params
-	AccPool AccPool `json:"eligible_accounts" yaml:"eligible_accounts"` // pool of eligible accounts
+	Minter   Minter   `json:"minter" yaml:"minter"`       // minter object
+	Params   Params   `json:"params" yaml:"params"`       // inflation params
+	MintPool MintPool `json:"mint_pool" yaml:"mint_pool"` // module pool
 }
 
 // NewGenesisState creates a new GenesisState object
-func NewGenesisState(minter Minter, params Params, accPool AccPool) GenesisState {
+func NewGenesisState(minter Minter, params Params, mintPool MintPool) GenesisState {
 	return GenesisState{
-		Minter:  minter,
-		Params:  params,
-		AccPool: accPool,
+		Minter:   minter,
+		Params:   params,
+		MintPool: mintPool,
 	}
 }
 
 // DefaultGenesisState creates a default GenesisState object
 func DefaultGenesisState() GenesisState {
 	return GenesisState{
-		Minter:  DefaultInitialMinter(),
-		Params:  DefaultParams(),
-		AccPool: AccPool{},
+		Minter:   DefaultInitialMinter(),
+		Params:   DefaultParams(),
+		MintPool: InitialMintPool(),
 	}
 }
 

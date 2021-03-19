@@ -14,5 +14,5 @@ func init() {
 // RegisterCodec registers the module's concrete types on the codec.
 func RegisterCodec(cdc *codec.Codec) {
 	codec.RegisterCrypto(ModuleCdc)
-	cdc.RegisterConcrete(MsgMintCoinToAcc{}, "oracle/MintCoinToAcc", nil)
+	cdc.RegisterConcrete(MsgMintCoinsToAcc{}, "oracle/MintCoinsToAcc", nil)
 }

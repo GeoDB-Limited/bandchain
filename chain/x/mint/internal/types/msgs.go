@@ -6,18 +6,18 @@ import (
 )
 
 // ensure Msg interface compliance at compile time
-var _ sdk.Msg = &MsgMintCoinToAcc{}
+var _ sdk.Msg = &MsgMintCoinsToAcc{}
 
-// MsgMintCoinToAcc defines a msg to mint some amount for receiver account
-type MsgMintCoinToAcc struct {
-	Amount   sdk.Coin       `json:"amount" yaml:"amount"`
+// MsgMintCoinsToAcc defines a msg to mint some amount for receiver account
+type MsgMintCoinsToAcc struct {
+	Amount   sdk.Coins      `json:"amount" yaml:"amount"`
 	Receiver sdk.AccAddress `json:"receiver" yaml:"receiver"`
 	Sender   sdk.AccAddress `json:"sender" yaml:"sender"`
 }
 
-// NewMsgMintCoinToAcc returns a new MsgMintCoinToAcc
-func NewMsgMintCoinToAcc(amt sdk.Coin, receiver sdk.AccAddress, sender sdk.AccAddress) MsgMintCoinToAcc {
-	return MsgMintCoinToAcc{
+// NewMsgMintCoinsToAcc returns a new MsgMintCoinsToAcc
+func NewMsgMintCoinsToAcc(amt sdk.Coins, receiver sdk.AccAddress, sender sdk.AccAddress) MsgMintCoinsToAcc {
+	return MsgMintCoinsToAcc{
 		Amount:   amt,
 		Receiver: receiver,
 		Sender:   sender,
@@ -25,17 +25,17 @@ func NewMsgMintCoinToAcc(amt sdk.Coin, receiver sdk.AccAddress, sender sdk.AccAd
 }
 
 // Route implements the sdk.Msg interface.
-func (msg MsgMintCoinToAcc) Route() string {
+func (msg MsgMintCoinsToAcc) Route() string {
 	return RouterKey
 }
 
 // Type implements the sdk.Msg interface.
-func (msg MsgMintCoinToAcc) Type() string {
+func (msg MsgMintCoinsToAcc) Type() string {
 	return "mint_coins"
 }
 
 // ValidateBasic implements the sdk.Msg interface.
-func (msg MsgMintCoinToAcc) ValidateBasic() error {
+func (msg MsgMintCoinsToAcc) ValidateBasic() error {
 	if msg.Sender.Empty() {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "sender: %s", msg.Sender)
 	}
@@ -45,7 +45,7 @@ func (msg MsgMintCoinToAcc) ValidateBasic() error {
 	if !msg.Amount.IsValid() {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidCoins, "amount: %s", msg.Amount.String())
 	}
-	if !msg.Amount.Amount.IsPositive() {
+	if msg.Amount.IsAnyNegative() {
 		return sdkerrors.Wrapf(ErrInvalidMintAmount, "amount: %s", msg.Amount.String())
 	}
 
@@ -53,11 +53,11 @@ func (msg MsgMintCoinToAcc) ValidateBasic() error {
 }
 
 // GetSignBytes implements the sdk.Msg interface.
-func (msg MsgMintCoinToAcc) GetSignBytes() []byte {
+func (msg MsgMintCoinsToAcc) GetSignBytes() []byte {
 	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(msg))
 }
 
 // GetSigners implements the sdk.Msg interface.
-func (msg MsgMintCoinToAcc) GetSigners() []sdk.AccAddress {
+func (msg MsgMintCoinsToAcc) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{msg.Sender}
 }

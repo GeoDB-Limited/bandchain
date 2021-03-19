@@ -26,11 +26,10 @@ const (
 )
 
 var (
+	// GlobalStoreKeyPrefix is used as prefix for the store keys
 	GlobalStoreKeyPrefix = []byte{0x00}
-
-	// AccountsPoolStoreKey is used for the eligible accounts store
-	AccountsPoolStoreKey = append(GlobalStoreKeyPrefix, []byte("AccountsPool")...)
-
 	// MinterKey is used for the keeper store
 	MinterKey = append(GlobalStoreKeyPrefix, []byte("Minter")...)
+	// MintPoolStoreKey is the key for global mint pool state
+	MintPoolStoreKey = append(GlobalStoreKeyPrefix, []byte("MintPool")...)
 )

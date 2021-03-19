@@ -76,22 +76,22 @@ func (k Keeper) GetMintAccount(ctx sdk.Context) exported.ModuleAccountI {
 
 //__________________________________________________________________________
 
-// GetAccPool load/save the pool of eligible accounts
-func (k Keeper) GetAccPool(ctx sdk.Context) (accPool types.AccPool) {
+// GetMintPool returns the mint pool info
+func (k Keeper) GetMintPool(ctx sdk.Context) (mintPool types.MintPool) {
 	store := ctx.KVStore(k.storeKey)
-	b := store.Get(types.AccountsPoolStoreKey)
+	b := store.Get(types.MintPoolStoreKey)
 	if b == nil {
-		panic("Stored pool should not have been nil")
+		panic("Stored fee pool should not have been nil")
 	}
-	k.cdc.MustUnmarshalBinaryLengthPrefixed(b, &accPool)
+	k.cdc.MustUnmarshalBinaryLengthPrefixed(b, &mintPool)
 	return
 }
 
-// SetAccPool sets the pool of eligible accounts
-func (k Keeper) SetAccPool(ctx sdk.Context, accPool types.AccPool) {
+// SetMintPool sets mint pool to the store
+func (k Keeper) SetMintPool(ctx sdk.Context, mintPool types.MintPool) {
 	store := ctx.KVStore(k.storeKey)
-	b := k.cdc.MustMarshalBinaryLengthPrefixed(accPool)
-	store.Set(types.AccountsPoolStoreKey, b)
+	b := k.cdc.MustMarshalBinaryLengthPrefixed(mintPool)
+	store.Set(types.MintPoolStoreKey, b)
 }
 
 //______________________________________________________________________
@@ -140,21 +140,21 @@ func (k Keeper) AddCollectedFees(ctx sdk.Context, fees sdk.Coins) error {
 
 // IsEligibleAccount checks if acc is eligible to mint
 func (k Keeper) IsEligibleAccount(ctx sdk.Context, acc sdk.AccAddress) bool {
-	accPool := k.GetAccPool(ctx)
-	return accPool.Contains(acc)
+	mintPool := k.GetMintPool(ctx)
+	return mintPool.EligiblePool.Contains(acc)
 }
 
-// IsValidLimit checks that minting amount does not exceed the limit
-func (k Keeper) IsValidLimit(ctx sdk.Context, coin sdk.Coin) bool {
+// IsExceedsLimit checks if minting amount exceeds the limit
+func (k Keeper) IsExceedsLimit(ctx sdk.Context, amt sdk.Coins) bool {
 	moduleParams := k.GetParams(ctx)
-	return coin.Amount.LTE(moduleParams.MintLimit)
+	return amt.IsAnyGT(moduleParams.MintMax)
 }
 
-// MintCoinToAcc mints coins from module to account
-func (k Keeper) MintCoinToAcc(ctx sdk.Context, recipient sdk.AccAddress, coin sdk.Coin) error {
-	if coin.IsZero() {
+// MintCoinsToAcc mints coins from module to account
+func (k Keeper) MintCoinsToAcc(ctx sdk.Context, recipient sdk.AccAddress, amt sdk.Coins) error {
+	if amt.Empty() {
 		return nil
 	}
 
-	return k.supplyKeeper.MintCoinsToAcc(ctx, types.ModuleName, recipient, sdk.NewCoins(coin))
+	return k.supplyKeeper.MintCoinsToAcc(ctx, types.ModuleName, recipient, amt)
 }

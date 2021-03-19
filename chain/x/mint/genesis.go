@@ -10,22 +10,27 @@ import (
 func InitGenesis(ctx sdk.Context, keeper Keeper, supplyKeeper types.SupplyKeeper, data GenesisState) {
 	keeper.SetMinter(ctx, data.Minter)
 	keeper.SetParams(ctx, data.Params)
-	keeper.SetAccPool(ctx, data.AccPool)
 
-	mintAcc := keeper.GetMintAccount(ctx)
-	if mintAcc == nil {
+	moduleAcc := keeper.GetMintAccount(ctx)
+	if moduleAcc == nil {
 		panic(fmt.Sprintf("%s module account has not been set", ModuleName))
 	}
 
-	if mintAcc.GetCoins().IsZero() {
-		supplyKeeper.SetModuleAccount(ctx, mintAcc)
+	moduleHoldings, _ := data.MintPool.TreasuryPool.TruncateDecimal()
+	if moduleAcc.GetCoins().IsZero() {
+		if err := moduleAcc.SetCoins(moduleHoldings); err != nil {
+			panic(err)
+		}
+		supplyKeeper.SetModuleAccount(ctx, moduleAcc)
 	}
+
+	keeper.SetMintPool(ctx, data.MintPool)
 }
 
 // ExportGenesis returns a GenesisState for a given context and keeper.
 func ExportGenesis(ctx sdk.Context, keeper Keeper) GenesisState {
 	minter := keeper.GetMinter(ctx)
 	params := keeper.GetParams(ctx)
-	accPool := keeper.GetAccPool(ctx)
-	return NewGenesisState(minter, params, accPool)
+	pool := keeper.GetMintPool(ctx)
+	return NewGenesisState(minter, params, pool)
 }

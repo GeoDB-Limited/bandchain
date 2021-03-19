@@ -28,13 +28,13 @@ func GetTxCmd(cdc *codec.Codec) *cobra.Command {
 		SuggestionsMinimumDistance: 2,
 		RunE:                       client.ValidateCmd,
 	}
-	mintCmd.AddCommand(flags.PostCommands(GetCmdMintCoinToAcc(cdc))...)
+	mintCmd.AddCommand(flags.PostCommands(GetCmdMintCoinsToAcc(cdc))...)
 
 	return mintCmd
 }
 
-// GetCmdMintCoinToAcc implements minting transaction command.
-func GetCmdMintCoinToAcc(cdc *codec.Codec) *cobra.Command {
+// GetCmdMintCoinsToAcc implements minting transaction command.
+func GetCmdMintCoinsToAcc(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "mint-coins (--receiver [receiver]) (--amount [amount])",
 		Short: "Mint some coins for account",
@@ -57,12 +57,12 @@ func GetCmdMintCoinToAcc(cdc *codec.Codec) *cobra.Command {
 			if err != nil {
 				return sdkerrors.Wrapf(err, "flag: %s", flagAmount)
 			}
-			amount, err := sdk.ParseCoin(amountStr)
+			amount, err := sdk.ParseCoins(amountStr)
 			if err != nil {
 				return sdkerrors.Wrapf(err, "amount: %s", amountStr)
 			}
 
-			msg := types.NewMsgMintCoinToAcc(amount, receiver, cliCtx.GetFromAddress())
+			msg := types.NewMsgMintCoinsToAcc(amount, receiver, cliCtx.GetFromAddress())
 			if err := msg.ValidateBasic(); err != nil {
 				return sdkerrors.Wrapf(err, "amount: %s receiver: %s", amount, receiverStr)
 			}

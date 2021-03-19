@@ -46,9 +46,9 @@ var (
 )
 
 type (
-	Keeper           = keeper.Keeper
-	GenesisState     = types.GenesisState
-	Minter           = types.Minter
-	Params           = types.Params
-	MsgMintCoinToAcc = types.MsgMintCoinToAcc
+	Keeper            = keeper.Keeper
+	GenesisState      = types.GenesisState
+	Minter            = types.Minter
+	Params            = types.Params
+	MsgMintCoinsToAcc = types.MsgMintCoinsToAcc
 )

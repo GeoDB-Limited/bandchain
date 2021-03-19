@@ -62,10 +62,6 @@
         "inflation": "0.120000000000000000",
         "annual_provisions": "0.000000000000000000"
       },
-      "eligible_accounts": [
-        "odin1nnfeguq30x6nwxjhaypxymx3nulyspsuja4a2x",
-        "odin17geerdwmlxpwxlahmt02vj4wy89wfstj2ufxqq"
-      ],
       "params": {
         "mint_denom": "loki",
         "inflation_rate_change": "0.000000000000000000",
@@ -74,7 +70,23 @@
         "goal_bonded": "0.670000000000000000",
         "blocks_per_year": "10519200",
         "mint_air": false,
-        "mint_limit": "100000000000000000000"
+        "mint_max": [
+          {
+            "denom": "loki",
+            "amount": "100000000000000000000"
+          }
+        ]
+      },
+      "mint_pool": {
+        "treasury_pool": [
+          {
+            "denom": "loki",
+            "amount": "30000000000000"
+          }
+        ],
+        "eligible_accounts_pool": [
+          "odin1nnfeguq30x6nwxjhaypxymx3nulyspsuja4a2x"
+        ]
       }
     },
     "upgrade": {},
