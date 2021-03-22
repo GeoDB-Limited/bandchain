@@ -11,7 +11,7 @@ func NewHandler(k Keeper) sdk.Handler {
 	return func(ctx sdk.Context, msg sdk.Msg) (*sdk.Result, error) {
 		ctx = ctx.WithEventManager(sdk.NewEventManager())
 		switch msg := msg.(type) {
-		case MsgMsgWithdrawCoinsToAccFromTreasury:
+		case MsgWithdrawCoinsToAccFromTreasury:
 			return handleWithdrawCoinsToAccFromTreasury(ctx, k, msg)
 		default:
 			return nil, sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "unrecognized %s message type: %T", ModuleName, msg)
@@ -19,8 +19,12 @@ func NewHandler(k Keeper) sdk.Handler {
 	}
 }
 
-// handleWithdrawCoinsToAccFromTreasury handles MsgMsgWithdrawCoinsToAccFromTreasury
-func handleWithdrawCoinsToAccFromTreasury(ctx sdk.Context, k Keeper, msg MsgMsgWithdrawCoinsToAccFromTreasury) (*sdk.Result, error) {
+// handleWithdrawCoinsToAccFromTreasury handles MsgWithdrawCoins
+func handleWithdrawCoinsToAccFromTreasury(
+	ctx sdk.Context,
+	k Keeper,
+	msg MsgWithdrawCoinsToAccFromTreasury,
+) (*sdk.Result, error) {
 	if !k.IsEligibleAccount(ctx, msg.Sender) {
 		return nil, sdkerrors.Wrapf(types.ErrAccountIsNotEligible, "account: %s", msg.Sender)
 	}
@@ -34,8 +38,8 @@ func handleWithdrawCoinsToAccFromTreasury(ctx sdk.Context, k Keeper, msg MsgMsgW
 	}
 
 	ctx.EventManager().EmitEvent(sdk.NewEvent(
-		types.EventTypeMint,
-		sdk.NewAttribute(types.AttributeKeyMintAmount, msg.Amount.String()),
+		types.EventTypeWithdrawal,
+		sdk.NewAttribute(types.AttributeKeyWithdrawalAmount, msg.Amount.String()),
 		sdk.NewAttribute(types.AttributeKeyReceiver, msg.Receiver.String()),
 		sdk.NewAttribute(types.AttributeKeySender, msg.Sender.String()),
 	))

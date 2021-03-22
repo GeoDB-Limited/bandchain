@@ -159,7 +159,7 @@ func (k Keeper) LimitExceeded(ctx sdk.Context, amt sdk.Coins) bool {
 // WithdrawCoinsToAccFromTreasury withdraws coins from module to account
 func (k Keeper) WithdrawCoinsToAccFromTreasury(ctx sdk.Context, receiver sdk.AccAddress, amt sdk.Coins) error {
 	if err := k.supplyKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, receiver, amt); err != nil {
-		return sdkerrors.Wrapf(err, "failed to mint %s from %s module account", amt.String(), types.ModuleName)
+		return sdkerrors.Wrapf(err, "failed to withdraw %s from %s module account", amt.String(), types.ModuleName)
 	}
 
 	mintPool := k.GetMintPool(ctx)

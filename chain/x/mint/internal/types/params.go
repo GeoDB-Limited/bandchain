@@ -111,13 +111,13 @@ func (p Params) Validate() error {
 
 func (p Params) String() string {
 	return fmt.Sprintf(`Minting Params:
-	Mint Denom:             %s
-	Inflation Rate Change:  %s
-	Inflation Max:          %s
-	Inflation Min:          %s
-	Goal Bonded:            %s
-	Blocks Per Year:        %d
-	Mint Max:				%s
+	Mint Denom:             	%s
+	Inflation Rate Change:  	%s
+	Inflation Max:          	%s
+	Inflation Min:          	%s
+	Goal Bonded:            	%s
+	Blocks Per Year:        	%d
+	Max Withdrawal Per Time:	%s
 `,
 		p.MintDenom, p.InflationRateChange, p.InflationMax,
 		p.InflationMin, p.GoalBonded, p.BlocksPerYear, p.MaxWithdrawalPerTime,

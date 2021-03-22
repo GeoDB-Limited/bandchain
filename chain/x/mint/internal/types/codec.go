@@ -13,5 +13,5 @@ func init() {
 
 // RegisterCodec registers the module's concrete types on the codec.
 func RegisterCodec(cdc *codec.Codec) {
-	cdc.RegisterConcrete(MsgMsgWithdrawCoinsToAccFromTreasury{}, "mint/WithdrawCoinsToAccFromTreasury", nil)
+	cdc.RegisterConcrete(MsgWithdrawCoinsToAccFromTreasury{}, "mint/WithdrawCoinsToAccFromTreasury", nil)
 }

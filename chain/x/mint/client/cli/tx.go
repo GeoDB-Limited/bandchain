@@ -24,7 +24,7 @@ func GetTxCmd(cdc *codec.Codec) *cobra.Command {
 	mintCmd := &cobra.Command{
 		Use:                        types.ModuleName,
 		Short:                      "mint transaction subcommands",
-		DisableFlagParsing: true,
+		DisableFlagParsing:         true,
 		SuggestionsMinimumDistance: 2,
 		RunE:                       client.ValidateCmd,
 	}
@@ -62,7 +62,7 @@ func GetCmdMsgWithdrawCoinsToAccFromTreasury(cdc *codec.Codec) *cobra.Command {
 				return sdkerrors.Wrapf(err, "amount: %s", amountStr)
 			}
 
-			msg := types.NewMsgMsgWithdrawCoinsToAccFromTreasury(amount, receiver, cliCtx.GetFromAddress())
+			msg := types.NewMsgWithdrawCoinsToAccFromTreasury(amount, receiver, cliCtx.GetFromAddress())
 			if err := msg.ValidateBasic(); err != nil {
 				return sdkerrors.Wrapf(err, "amount: %s receiver: %s", amount, receiverStr)
 			}
