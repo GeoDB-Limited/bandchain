@@ -97,7 +97,6 @@ func RandomizedGenState(simState *module.SimulationState) {
 	mintDenom := sdk.DefaultBondDenom
 	blocksPerYear := uint64(60 * 60 * 8766 / 5)
 	MaxWithdrawalPerTime := sdk.Coins{}
-	params := types.NewParams(mintDenom, inflationRateChange, inflationMax, inflationMin, goalBonded, blocksPerYear, mintAir, ethIntegrationAddress)
 
 	params := types.NewParams(
 		mintDenom,
@@ -108,6 +107,7 @@ func RandomizedGenState(simState *module.SimulationState) {
 		MaxWithdrawalPerTime,
 		blocksPerYear,
 		mintAir,
+		ethIntegrationAddress,
 	)
 
 	mintGenesis := types.NewGenesisState(types.InitialMinter(inflation), params, types.InitialMintPool())

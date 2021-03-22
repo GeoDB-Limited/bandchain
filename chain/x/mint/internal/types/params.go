@@ -8,7 +8,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/x/params"
-	"strings"
 )
 
 // Parameter store keys
@@ -21,20 +20,20 @@ var (
 	KeyBlocksPerYear         = []byte("BlocksPerYear")
 	KeyMintAir               = []byte("MintAir")
 	KeyEthIntegrationAddress = []byte("EthIntegrationAddress")
-	KeyMaxWithdrawalPerTime = []byte("MaxWithdrawalPerTime")
+	KeyMaxWithdrawalPerTime  = []byte("MaxWithdrawalPerTime")
 )
 
 // Params defines a mint parameters
 type Params struct {
-	MintDenom             string  `json:"mint_denom" yaml:"mint_denom"`                           // type of coin to mint
-	InflationRateChange   sdk.Dec `json:"inflation_rate_change" yaml:"inflation_rate_change"`     // maximum annual change in inflation rate
-	InflationMax          sdk.Dec `json:"inflation_max" yaml:"inflation_max"`                     // maximum inflation rate
-	InflationMin          sdk.Dec `json:"inflation_min" yaml:"inflation_min"`                     // minimum inflation rate
-	GoalBonded            sdk.Dec `json:"goal_bonded" yaml:"goal_bonded"`                         // goal of percent bonded atoms
-	BlocksPerYear         uint64  `json:"blocks_per_year" yaml:"blocks_per_year"`                 // expected blocks per year
-	MintAir               bool    `json:"mint_air" yaml:"mint_air"`                               // weather coins should be minted in vanilla way, or just retrieved from fee pool
-	EthIntegrationAddress string  `json:"eth_integration_address" yaml:"eth_integration_address"` // address of the contract for integration with eth
-	MaxWithdrawalPerTime sdk.Coins `json:"max_withdrawal_per_time" yaml:"max_withdrawal_per_time"` // max to mint in one withdraw
+	MintDenom             string    `json:"mint_denom" yaml:"mint_denom"`                           // type of coin to mint
+	InflationRateChange   sdk.Dec   `json:"inflation_rate_change" yaml:"inflation_rate_change"`     // maximum annual change in inflation rate
+	InflationMax          sdk.Dec   `json:"inflation_max" yaml:"inflation_max"`                     // maximum inflation rate
+	InflationMin          sdk.Dec   `json:"inflation_min" yaml:"inflation_min"`                     // minimum inflation rate
+	GoalBonded            sdk.Dec   `json:"goal_bonded" yaml:"goal_bonded"`                         // goal of percent bonded atoms
+	BlocksPerYear         uint64    `json:"blocks_per_year" yaml:"blocks_per_year"`                 // expected blocks per year
+	MintAir               bool      `json:"mint_air" yaml:"mint_air"`                               // weather coins should be minted in vanilla way, or just retrieved from fee pool
+	EthIntegrationAddress string    `json:"eth_integration_address" yaml:"eth_integration_address"` // address of the contract for integration with eth
+	MaxWithdrawalPerTime  sdk.Coins `json:"max_withdrawal_per_time" yaml:"max_withdrawal_per_time"` // max to mint in one withdraw
 }
 
 // ParamKeyTable defines a key table for minting module.
@@ -56,7 +55,7 @@ func NewParams(
 		BlocksPerYear:         blocksPerYear,
 		MintAir:               mintAir,
 		EthIntegrationAddress: ethIntegrationAddress,
-		MaxWithdrawalPerTime: MaxWithdrawalPerTime,
+		MaxWithdrawalPerTime:  MaxWithdrawalPerTime,
 	}
 }
 
@@ -71,7 +70,7 @@ func DefaultParams() Params {
 		BlocksPerYear:         uint64(60 * 60 * 8766 / 5), // assuming 5 second block times
 		MintAir:               false,
 		EthIntegrationAddress: "0xa19Df1199CeEfd7831576f1D055E454364337633", // default value (might be invalid for actual use)
-		MaxWithdrawalPerTime: sdk.Coins{},
+		MaxWithdrawalPerTime:  sdk.Coins{},
 	}
 }
 
@@ -127,7 +126,7 @@ func (p Params) String() string {
   Max Withdrawal Per Time:	%s
 `,
 		p.MintDenom, p.InflationRateChange, p.InflationMax,
-		p.InflationMin, p.GoalBonded, p.BlocksPerYear, p.EthIntegrationAddress, p.MaxWithdrawalPerTime
+		p.InflationMin, p.GoalBonded, p.BlocksPerYear, p.EthIntegrationAddress, p.MaxWithdrawalPerTime,
 	)
 }
 
