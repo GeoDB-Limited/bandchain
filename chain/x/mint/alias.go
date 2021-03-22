@@ -12,6 +12,7 @@ const (
 	DefaultParamspace     = types.DefaultParamspace
 	StoreKey              = types.StoreKey
 	QuerierRoute          = types.QuerierRoute
+	RouterKey             = types.RouterKey
 	QueryParameters       = types.QueryParameters
 	QueryInflation        = types.QueryInflation
 	QueryAnnualProvisions = types.QueryAnnualProvisions
@@ -31,6 +32,7 @@ var (
 	ParamKeyTable        = types.ParamKeyTable
 	NewParams            = types.NewParams
 	DefaultParams        = types.DefaultParams
+	RegisterCodec        = types.RegisterCodec
 
 	// variable aliases
 	ModuleCdc              = types.ModuleCdc
@@ -44,8 +46,9 @@ var (
 )
 
 type (
-	Keeper       = keeper.Keeper
-	GenesisState = types.GenesisState
-	Minter       = types.Minter
-	Params       = types.Params
+	Keeper                            = keeper.Keeper
+	GenesisState                      = types.GenesisState
+	Minter                            = types.Minter
+	Params                            = types.Params
+	MsgWithdrawCoinsToAccFromTreasury = types.MsgWithdrawCoinsToAccFromTreasury
 )

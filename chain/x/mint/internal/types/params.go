@@ -1,13 +1,14 @@
 package types
 
 import (
-	"errors"
 	"fmt"
 	eth "github.com/ethereum/go-ethereum/common"
 	"strings"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/x/params"
+	"strings"
 )
 
 // Parameter store keys
@@ -20,9 +21,10 @@ var (
 	KeyBlocksPerYear         = []byte("BlocksPerYear")
 	KeyMintAir               = []byte("MintAir")
 	KeyEthIntegrationAddress = []byte("EthIntegrationAddress")
+	KeyMaxWithdrawalPerTime = []byte("MaxWithdrawalPerTime")
 )
 
-// mint parameters
+// Params defines a mint parameters
 type Params struct {
 	MintDenom             string  `json:"mint_denom" yaml:"mint_denom"`                           // type of coin to mint
 	InflationRateChange   sdk.Dec `json:"inflation_rate_change" yaml:"inflation_rate_change"`     // maximum annual change in inflation rate
@@ -32,15 +34,17 @@ type Params struct {
 	BlocksPerYear         uint64  `json:"blocks_per_year" yaml:"blocks_per_year"`                 // expected blocks per year
 	MintAir               bool    `json:"mint_air" yaml:"mint_air"`                               // weather coins should be minted in vanilla way, or just retrieved from fee pool
 	EthIntegrationAddress string  `json:"eth_integration_address" yaml:"eth_integration_address"` // address of the contract for integration with eth
+	MaxWithdrawalPerTime sdk.Coins `json:"max_withdrawal_per_time" yaml:"max_withdrawal_per_time"` // max to mint in one withdraw
 }
 
-// ParamTable for minting module.
+// ParamKeyTable defines a key table for minting module.
 func ParamKeyTable() params.KeyTable {
 	return params.NewKeyTable().RegisterParamSet(&Params{})
 }
 
+// NewParams returns a new mint params
 func NewParams(
-	mintDenom string, inflationRateChange, inflationMax, inflationMin, goalBonded sdk.Dec, blocksPerYear uint64, mintAir bool, ethIntegrationAddress string,
+	mintDenom string, inflationRateChange, inflationMax, inflationMin, goalBonded sdk.Dec, MaxWithdrawalPerTime sdk.Coins, blocksPerYear uint64, mintAir bool, ethIntegrationAddress string,
 ) Params {
 
 	return Params{
@@ -52,10 +56,11 @@ func NewParams(
 		BlocksPerYear:         blocksPerYear,
 		MintAir:               mintAir,
 		EthIntegrationAddress: ethIntegrationAddress,
+		MaxWithdrawalPerTime: MaxWithdrawalPerTime,
 	}
 }
 
-// default minting module parameters
+// DefaultParams returns default minting module parameters
 func DefaultParams() Params {
 	return Params{
 		MintDenom:             sdk.DefaultBondDenom,
@@ -66,6 +71,7 @@ func DefaultParams() Params {
 		BlocksPerYear:         uint64(60 * 60 * 8766 / 5), // assuming 5 second block times
 		MintAir:               false,
 		EthIntegrationAddress: "0xa19Df1199CeEfd7831576f1D055E454364337633", // default value (might be invalid for actual use)
+		MaxWithdrawalPerTime: sdk.Coins{},
 	}
 }
 
@@ -95,6 +101,9 @@ func (p Params) Validate() error {
 	if err := validateEthIntegarionAddress(p.EthIntegrationAddress); err != nil {
 		return err
 	}
+	if err := validateMaxWithdrawalPerTime(p.MaxWithdrawalPerTime); err != nil {
+		return err
+	}
 	if p.InflationMax.LT(p.InflationMin) {
 		return fmt.Errorf(
 			"max inflation (%s) must be greater than or equal to min inflation (%s)",
@@ -115,9 +124,10 @@ func (p Params) String() string {
   Goal Bonded:            %s
   Blocks Per Year:        %d
   Eth Integration Address: %s
+  Max Withdrawal Per Time:	%s
 `,
 		p.MintDenom, p.InflationRateChange, p.InflationMax,
-		p.InflationMin, p.GoalBonded, p.BlocksPerYear, p.EthIntegrationAddress,
+		p.InflationMin, p.GoalBonded, p.BlocksPerYear, p.EthIntegrationAddress, p.MaxWithdrawalPerTime
 	)
 }
 
@@ -132,6 +142,7 @@ func (p *Params) ParamSetPairs() params.ParamSetPairs {
 		params.NewParamSetPair(KeyBlocksPerYear, &p.BlocksPerYear, validateBlocksPerYear),
 		params.NewParamSetPair(KeyMintAir, &p.MintAir, validateMintAir),
 		params.NewParamSetPair(KeyEthIntegrationAddress, &p.EthIntegrationAddress, validateEthIntegarionAddress),
+		params.NewParamSetPair(KeyMaxWithdrawalPerTime, &p.MaxWithdrawalPerTime, validateMaxWithdrawalPerTime),
 	}
 }
 
@@ -153,7 +164,7 @@ func validateMintDenom(i interface{}) error {
 	}
 
 	if strings.TrimSpace(v) == "" {
-		return errors.New("mint denom cannot be blank")
+		return sdkerrors.Wrap(ErrInvalidMintDenom, "mint denom cannot be blank")
 	}
 	if err := sdk.ValidateDenom(v); err != nil {
 		return err
@@ -221,6 +232,21 @@ func validateGoalBonded(i interface{}) error {
 	}
 	if v.GT(sdk.OneDec()) {
 		return fmt.Errorf("goal bonded too large: %s", v)
+	}
+
+	return nil
+}
+
+func validateMaxWithdrawalPerTime(i interface{}) error {
+	v, ok := i.(sdk.Coins)
+	if !ok {
+		return fmt.Errorf("invalid parameter type: %T", i)
+	}
+	if !v.IsValid() {
+		return fmt.Errorf("max withdrawal per time parameter is not valid: %s", v)
+	}
+	if v.IsAnyNegative() {
+		return fmt.Errorf("max withdrawal per time cannot be negative: %s", v)
 	}
 
 	return nil

@@ -3,6 +3,8 @@ package keeper
 import (
 	"fmt"
 	"github.com/GeoDB-Limited/odincore/chain/x/mint/internal/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	"github.com/cosmos/cosmos-sdk/x/supply/exported"
 
 	"github.com/tendermint/tendermint/libs/log"
 
@@ -61,11 +63,41 @@ func (k Keeper) GetMinter(ctx sdk.Context) (minter types.Minter) {
 	return
 }
 
-// set the minter
+// SetMinter sets the minter
 func (k Keeper) SetMinter(ctx sdk.Context, minter types.Minter) {
 	store := ctx.KVStore(k.storeKey)
 	b := k.cdc.MustMarshalBinaryLengthPrefixed(minter)
 	store.Set(types.MinterKey, b)
+}
+
+// GetMintAccount returns the mint ModuleAccount
+func (k Keeper) GetMintAccount(ctx sdk.Context) exported.ModuleAccountI {
+	return k.supplyKeeper.GetModuleAccount(ctx, types.ModuleName)
+}
+
+// SetMintAccount sets the module account
+func (k Keeper) SetMintAccount(ctx sdk.Context, moduleAcc exported.ModuleAccountI) {
+	k.supplyKeeper.SetModuleAccount(ctx, moduleAcc)
+}
+
+//__________________________________________________________________________
+
+// GetMintPool returns the mint pool info
+func (k Keeper) GetMintPool(ctx sdk.Context) (mintPool types.MintPool) {
+	store := ctx.KVStore(k.storeKey)
+	b := store.Get(types.MintPoolStoreKey)
+	if b == nil {
+		panic("Stored fee pool should not have been nil")
+	}
+	k.cdc.MustUnmarshalBinaryLengthPrefixed(b, &mintPool)
+	return
+}
+
+// SetMintPool sets mint pool to the store
+func (k Keeper) SetMintPool(ctx sdk.Context, mintPool types.MintPool) {
+	store := ctx.KVStore(k.storeKey)
+	b := k.cdc.MustMarshalBinaryLengthPrefixed(mintPool)
+	store.Set(types.MintPoolStoreKey, b)
 }
 
 //______________________________________________________________________
@@ -110,4 +142,38 @@ func (k Keeper) MintCoins(ctx sdk.Context, newCoins sdk.Coins) error {
 // AddCollectedFees to be used in BeginBlocker.
 func (k Keeper) AddCollectedFees(ctx sdk.Context, fees sdk.Coins) error {
 	return k.supplyKeeper.SendCoinsFromModuleToModule(ctx, types.ModuleName, k.feeCollectorName, fees)
+}
+
+// IsEligibleAccount checks if acc is eligible to mint
+func (k Keeper) IsEligibleAccount(ctx sdk.Context, acc sdk.AccAddress) bool {
+	mintPool := k.GetMintPool(ctx)
+	return mintPool.EligiblePool.Contains(acc)
+}
+
+// LimitExceeded checks if withdrawal amount exceeds the limit
+func (k Keeper) LimitExceeded(ctx sdk.Context, amt sdk.Coins) bool {
+	moduleParams := k.GetParams(ctx)
+	return amt.IsAnyGT(moduleParams.MaxWithdrawalPerTime)
+}
+
+// WithdrawCoinsToAccFromTreasury withdraws coins from module to account
+func (k Keeper) WithdrawCoinsToAccFromTreasury(ctx sdk.Context, receiver sdk.AccAddress, amt sdk.Coins) error {
+	if err := k.supplyKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, receiver, amt); err != nil {
+		return sdkerrors.Wrapf(err, "failed to withdraw %s from %s module account", amt.String(), types.ModuleName)
+	}
+
+	mintPool := k.GetMintPool(ctx)
+	if amt.IsAllGT(mintPool.TreasuryPool) {
+		return sdkerrors.Wrapf(
+			types.ErrWithdrawalAmountExceedsModuleBalance,
+			"withdrawal amount: %s exceeds %s module balance",
+			amt.String(),
+			types.ModuleName,
+		)
+	}
+
+	mintPool.TreasuryPool = mintPool.TreasuryPool.Sub(amt)
+	k.SetMintPool(ctx, mintPool)
+
+	return nil
 }
