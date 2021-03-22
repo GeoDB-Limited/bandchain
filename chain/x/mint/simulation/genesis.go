@@ -5,6 +5,8 @@ package simulation
 import (
 	"fmt"
 	"github.com/GeoDB-Limited/odincore/chain/x/mint/internal/types"
+	"github.com/ethereum/go-ethereum/common/hexutil"
+	"github.com/ethereum/go-ethereum/crypto"
 	"math/rand"
 
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -15,12 +17,13 @@ import (
 
 // Simulation parameter constants
 const (
-	Inflation           = "inflation"
-	InflationRateChange = "inflation_rate_change"
-	InflationMax        = "inflation_max"
-	InflationMin        = "inflation_min"
-	GoalBonded          = "goal_bonded"
-	MintAir             = "mint_air"
+	Inflation             = "inflation"
+	InflationRateChange   = "inflation_rate_change"
+	InflationMax          = "inflation_max"
+	InflationMin          = "inflation_min"
+	GoalBonded            = "goal_bonded"
+	MintAir               = "mint_air"
+	EthIntegrationAddress = "eth_integration_address"
 )
 
 // GenInflation randomized Inflation
@@ -84,6 +87,13 @@ func RandomizedGenState(simState *module.SimulationState) {
 
 	var mintAir = false
 
+	privateKey, err := crypto.GenerateKey()
+	if err != nil {
+		panic(err)
+	}
+	privateKeyBytes := crypto.FromECDSA(privateKey)
+	var ethIntegrationAddress = hexutil.Encode(privateKeyBytes)
+
 	mintDenom := sdk.DefaultBondDenom
 	blocksPerYear := uint64(60 * 60 * 8766 / 5)
 	MaxWithdrawalPerTime := sdk.Coins{}
@@ -97,6 +107,7 @@ func RandomizedGenState(simState *module.SimulationState) {
 		MaxWithdrawalPerTime,
 		blocksPerYear,
 		mintAir,
+		ethIntegrationAddress,
 	)
 
 	mintGenesis := types.NewGenesisState(types.InitialMinter(inflation), params, types.InitialMintPool())

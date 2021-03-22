@@ -285,7 +285,10 @@ func NewParams(
 	SamplingTryCount uint64,
 	OracleRewardPercentage uint64,
 	InactivePenaltyDuration uint64,
+	MaxDataSize uint64,
+	MaxCalldataSize uint64,
 	DataProviderRewardPerByte CoinDecProto,
+	DataRequesterBasicFee CoinProto,
 ) Params {
 	return Params{
 		MaxRawRequestCount:        MaxRawRequestCount,
@@ -296,6 +299,9 @@ func NewParams(
 		SamplingTryCount:          SamplingTryCount,
 		OracleRewardPercentage:    OracleRewardPercentage,
 		InactivePenaltyDuration:   InactivePenaltyDuration,
+		MaxDataSize:               MaxDataSize,
+		MaxCalldataSize:           MaxCalldataSize,
 		DataProviderRewardPerByte: DataProviderRewardPerByte,
+		DataRequesterBasicFee:     DataRequesterBasicFee,
 	}
 }

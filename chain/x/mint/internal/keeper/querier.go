@@ -22,6 +22,9 @@ func NewQuerier(k Keeper) sdk.Querier {
 		case types.QueryAnnualProvisions:
 			return queryAnnualProvisions(ctx, k)
 
+		case types.QueryEthIntegrationAddress:
+			return queryEthIntegrationAddress(ctx, k)
+
 		default:
 			return nil, sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "unknown query path: %s", path[0])
 		}
@@ -58,5 +61,15 @@ func queryAnnualProvisions(ctx sdk.Context, k Keeper) ([]byte, error) {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
 	}
 
+	return res, nil
+}
+
+func queryEthIntegrationAddress(ctx sdk.Context, k Keeper) ([]byte, error) {
+	params := k.GetParams(ctx)
+
+	res, err := codec.MarshalJSONIndent(k.cdc, params.EthIntegrationAddress)
+	if err != nil {
+		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
+	}
 	return res, nil
 }

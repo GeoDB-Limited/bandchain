@@ -63,11 +63,14 @@ func ParamKeyTable() params.KeyTable {
 	return params.NewKeyTable().RegisterParamSet(&types.Params{})
 }
 
-// todo may be dangerous to keep, as far as we have not only uint params
-// GetParam returns the parameter as specified by key as an uint64.
-func (k Keeper) GetParam(ctx sdk.Context, key []byte) (res uint64) {
+// GetParamUint64 returns the parameter as specified by key as an uint64.
+func (k Keeper) GetParamUint64(ctx sdk.Context, key []byte) (res uint64) {
 	k.paramSpace.Get(ctx, key, &res)
 	return res
+}
+
+func (k Keeper) SetParamUint64(ctx sdk.Context, key []byte, value uint64) {
+	k.paramSpace.Set(ctx, key, value)
 }
 
 // SetParam saves the given key-value parameter to the store.
@@ -81,8 +84,21 @@ func (k Keeper) GetParams(ctx sdk.Context) (params types.Params) {
 	return params
 }
 
+func (k Keeper) SetDataProviderRewardPerByteParam(ctx sdk.Context, value types.CoinDecProto) {
+	k.paramSpace.Set(ctx, types.KeyDataProviderRewardPerByte, value)
+}
+
 func (k Keeper) GetDataProviderRewardPerByteParam(ctx sdk.Context) (res types.CoinDecProto) {
 	k.paramSpace.Get(ctx, types.KeyDataProviderRewardPerByte, &res)
+	return res
+}
+
+func (k Keeper) SetDataRequesterBasicFeeParam(ctx sdk.Context, value types.CoinProto) {
+	k.paramSpace.Set(ctx, types.KeyDataRequesterBasicFee, value)
+}
+
+func (k Keeper) GetDataRequesterBasicFeeParam(ctx sdk.Context) (res types.CoinProto) {
+	k.paramSpace.Get(ctx, types.KeyDataRequesterBasicFee, &res)
 	return res
 }
 

@@ -2,6 +2,7 @@ package app
 
 import (
 	"github.com/GeoDB-Limited/odincore/chain/x/coinswap"
+	odinsupply "github.com/GeoDB-Limited/odincore/chain/x/supply"
 	"io"
 	"os"
 	"path/filepath"
@@ -37,7 +38,6 @@ import (
 
 	"github.com/GeoDB-Limited/odincore/chain/x/oracle"
 	bandante "github.com/GeoDB-Limited/odincore/chain/x/oracle/ante"
-	bandsupply "github.com/GeoDB-Limited/odincore/chain/x/supply"
 )
 
 const (
@@ -94,20 +94,21 @@ type BandApp struct {
 	keys  map[string]*sdk.KVStoreKey
 	tKeys map[string]*sdk.TransientStoreKey
 	// Module keepers, publicly accessible to facilate testing and extending (see emitter).
-	AccountKeeper  auth.AccountKeeper
-	BankKeeper     bank.Keeper
-	SupplyKeeper   supply.Keeper
-	StakingKeeper  staking.Keeper
-	SlashingKeeper slashing.Keeper
-	MintKeeper     odinmint.Keeper
-	DistrKeeper    distr.Keeper
-	GovKeeper      gov.Keeper
-	CrisisKeeper   crisis.Keeper
-	ParamsKeeper   params.Keeper
-	UpgradeKeeper  upgrade.Keeper
-	EvidenceKeeper evidence.Keeper
-	OracleKeeper   oracle.Keeper
-	CoinswapKeeper coinswap.Keeper
+	AccountKeeper       auth.AccountKeeper
+	BankKeeper          bank.Keeper
+	SupplyKeeper        supply.Keeper
+	WrappedSupplyKeeper odinsupply.WrappedSupplyKeeper
+	StakingKeeper       staking.Keeper
+	SlashingKeeper      slashing.Keeper
+	MintKeeper          odinmint.Keeper
+	DistrKeeper         distr.Keeper
+	GovKeeper           gov.Keeper
+	CrisisKeeper        crisis.Keeper
+	ParamsKeeper        params.Keeper
+	UpgradeKeeper       upgrade.Keeper
+	EvidenceKeeper      evidence.Keeper
+	OracleKeeper        oracle.Keeper
+	CoinswapKeeper      coinswap.Keeper
 	// Deliver context, set during InitGenesis/BeginBlock and cleared during Commit. It allows
 	// anyone with access to BandApp to read/mutate consensus state anytime. USE WITH CARE!
 	DeliverContext sdk.Context
@@ -179,18 +180,18 @@ func NewBandApp(
 	app.BankKeeper = bank.NewBaseKeeper(app.AccountKeeper, bankSubspace, app.BlacklistedAccAddrs())
 	app.SupplyKeeper = supply.NewKeeper(cdc, keys[supply.StoreKey], app.AccountKeeper, app.BankKeeper, maccPerms)
 	// wrappedSupplyKeeper overrides burn token behavior to instead transfer to community pool.
-	wrappedSupplyKeeper := bandsupply.WrapSupplyKeeperBurnToCommunityPool(app.SupplyKeeper)
-	stakingKeeper := staking.NewKeeper(cdc, keys[staking.StoreKey], &wrappedSupplyKeeper, stakingSubspace)
-	app.MintKeeper = odinmint.NewKeeper(cdc, keys[odinmint.StoreKey], mintSubspace, &stakingKeeper, &wrappedSupplyKeeper, auth.FeeCollectorName)
+	app.WrappedSupplyKeeper = odinsupply.WrapSupplyKeeperBurnToCommunityPool(app.SupplyKeeper)
+	stakingKeeper := staking.NewKeeper(cdc, keys[staking.StoreKey], &app.WrappedSupplyKeeper, stakingSubspace)
+	app.MintKeeper = odinmint.NewKeeper(cdc, keys[odinmint.StoreKey], mintSubspace, &stakingKeeper, &app.WrappedSupplyKeeper, auth.FeeCollectorName)
 	app.DistrKeeper = distr.NewKeeper(cdc, keys[distr.StoreKey], distrSubspace, &stakingKeeper, app.SupplyKeeper, auth.FeeCollectorName, app.ModuleAccountAddrs())
 	// DistrKeeper must be set afterward due to the circular reference between supply-staking-distr.
-	wrappedSupplyKeeper.SetDistrKeeper(&app.DistrKeeper)
-	wrappedSupplyKeeper.SetMintKeeper(&app.MintKeeper)
-	app.CrisisKeeper = crisis.NewKeeper(crisisSubspace, invCheckPeriod, app.SupplyKeeper, auth.FeeCollectorName)
+	app.WrappedSupplyKeeper.SetDistrKeeper(&app.DistrKeeper)
+	app.WrappedSupplyKeeper.SetMintKeeper(&app.MintKeeper)
+	app.CrisisKeeper = crisis.NewKeeper(crisisSubspace, invCheckPeriod, app.WrappedSupplyKeeper, auth.FeeCollectorName)
 	app.SlashingKeeper = slashing.NewKeeper(cdc, keys[slashing.StoreKey], &stakingKeeper, slashingSubspace)
 	app.UpgradeKeeper = upgrade.NewKeeper(skipUpgradeHeights, keys[upgrade.StoreKey], cdc)
-	app.OracleKeeper = oracle.NewKeeper(cdc, keys[oracle.StoreKey], filepath.Join(viper.GetString(cli.HomeFlag), "files"), auth.FeeCollectorName, oracleSubspace, app.SupplyKeeper, &stakingKeeper, app.DistrKeeper)
-	app.CoinswapKeeper = coinswap.NewKeeper(cdc, keys[coinswap.StoreKey], coinswapSubspace, wrappedSupplyKeeper, app.DistrKeeper, app.OracleKeeper)
+	app.OracleKeeper = oracle.NewKeeper(cdc, keys[oracle.StoreKey], filepath.Join(viper.GetString(cli.HomeFlag), "files"), auth.FeeCollectorName, oracleSubspace, app.WrappedSupplyKeeper, &stakingKeeper, app.DistrKeeper)
+	app.CoinswapKeeper = coinswap.NewKeeper(cdc, keys[coinswap.StoreKey], coinswapSubspace, app.WrappedSupplyKeeper, app.DistrKeeper, app.OracleKeeper)
 	// Register the proposal types.
 	govRouter := gov.NewRouter()
 	govRouter.
@@ -220,7 +221,7 @@ func NewBandApp(
 		staking.NewAppModule(app.StakingKeeper, app.AccountKeeper, app.SupplyKeeper),
 		upgrade.NewAppModule(app.UpgradeKeeper),
 		evidence.NewAppModule(app.EvidenceKeeper),
-		oracle.NewAppModule(app.OracleKeeper, wrappedSupplyKeeper),
+		oracle.NewAppModule(app.OracleKeeper, app.WrappedSupplyKeeper),
 		coinswap.NewAppModule(app.CoinswapKeeper),
 	)
 	// NOTE: Oracle module must occur before distr as it takes some fee to distribute to active oracle validators.

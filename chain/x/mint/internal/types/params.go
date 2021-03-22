@@ -2,34 +2,38 @@ package types
 
 import (
 	"fmt"
+	eth "github.com/ethereum/go-ethereum/common"
+	"strings"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/x/params"
-	"strings"
 )
 
 // Parameter store keys
 var (
-	KeyMintDenom            = []byte("MintDenom")
-	KeyInflationRateChange  = []byte("InflationRateChange")
-	KeyInflationMax         = []byte("InflationMax")
-	KeyInflationMin         = []byte("InflationMin")
-	KeyGoalBonded           = []byte("GoalBonded")
-	KeyBlocksPerYear        = []byte("BlocksPerYear")
-	KeyMintAir              = []byte("MintAir")
-	KeyMaxWithdrawalPerTime = []byte("MaxWithdrawalPerTime")
+	KeyMintDenom             = []byte("MintDenom")
+	KeyInflationRateChange   = []byte("InflationRateChange")
+	KeyInflationMax          = []byte("InflationMax")
+	KeyInflationMin          = []byte("InflationMin")
+	KeyGoalBonded            = []byte("GoalBonded")
+	KeyBlocksPerYear         = []byte("BlocksPerYear")
+	KeyMintAir               = []byte("MintAir")
+	KeyEthIntegrationAddress = []byte("EthIntegrationAddress")
+	KeyMaxWithdrawalPerTime  = []byte("MaxWithdrawalPerTime")
 )
 
 // Params defines a mint parameters
 type Params struct {
-	MintDenom            string    `json:"mint_denom" yaml:"mint_denom"`                           // type of coin to mint
-	InflationRateChange  sdk.Dec   `json:"inflation_rate_change" yaml:"inflation_rate_change"`     // maximum annual change in inflation rate
-	InflationMax         sdk.Dec   `json:"inflation_max" yaml:"inflation_max"`                     // maximum inflation rate
-	InflationMin         sdk.Dec   `json:"inflation_min" yaml:"inflation_min"`                     // minimum inflation rate
-	GoalBonded           sdk.Dec   `json:"goal_bonded" yaml:"goal_bonded"`                         // goal of percent bonded atoms
-	BlocksPerYear        uint64    `json:"blocks_per_year" yaml:"blocks_per_year"`                 // expected blocks per year
-	MintAir              bool      `json:"mint_air" yaml:"mint_air"`                               // flag if mint from air
-	MaxWithdrawalPerTime sdk.Coins `json:"max_withdrawal_per_time" yaml:"max_withdrawal_per_time"` // max to mint in one withdraw
+	MintDenom             string    `json:"mint_denom" yaml:"mint_denom"`                           // type of coin to mint
+	InflationRateChange   sdk.Dec   `json:"inflation_rate_change" yaml:"inflation_rate_change"`     // maximum annual change in inflation rate
+	InflationMax          sdk.Dec   `json:"inflation_max" yaml:"inflation_max"`                     // maximum inflation rate
+	InflationMin          sdk.Dec   `json:"inflation_min" yaml:"inflation_min"`                     // minimum inflation rate
+	GoalBonded            sdk.Dec   `json:"goal_bonded" yaml:"goal_bonded"`                         // goal of percent bonded atoms
+	BlocksPerYear         uint64    `json:"blocks_per_year" yaml:"blocks_per_year"`                 // expected blocks per year
+	MintAir               bool      `json:"mint_air" yaml:"mint_air"`                               // weather coins should be minted in vanilla way, or just retrieved from fee pool
+	EthIntegrationAddress string    `json:"eth_integration_address" yaml:"eth_integration_address"` // address of the contract for integration with eth
+	MaxWithdrawalPerTime  sdk.Coins `json:"max_withdrawal_per_time" yaml:"max_withdrawal_per_time"` // max to mint in one withdraw
 }
 
 // ParamKeyTable defines a key table for minting module.
@@ -39,36 +43,34 @@ func ParamKeyTable() params.KeyTable {
 
 // NewParams returns a new mint params
 func NewParams(
-	mintDenom string,
-	inflationRateChange, inflationMax, inflationMin, goalBonded sdk.Dec,
-	MaxWithdrawalPerTime sdk.Coins,
-	blocksPerYear uint64,
-	mintAir bool,
+	mintDenom string, inflationRateChange, inflationMax, inflationMin, goalBonded sdk.Dec, MaxWithdrawalPerTime sdk.Coins, blocksPerYear uint64, mintAir bool, ethIntegrationAddress string,
 ) Params {
 
 	return Params{
-		MintDenom:            mintDenom,
-		InflationRateChange:  inflationRateChange,
-		InflationMax:         inflationMax,
-		InflationMin:         inflationMin,
-		GoalBonded:           goalBonded,
-		BlocksPerYear:        blocksPerYear,
-		MintAir:              mintAir,
-		MaxWithdrawalPerTime: MaxWithdrawalPerTime,
+		MintDenom:             mintDenom,
+		InflationRateChange:   inflationRateChange,
+		InflationMax:          inflationMax,
+		InflationMin:          inflationMin,
+		GoalBonded:            goalBonded,
+		BlocksPerYear:         blocksPerYear,
+		MintAir:               mintAir,
+		EthIntegrationAddress: ethIntegrationAddress,
+		MaxWithdrawalPerTime:  MaxWithdrawalPerTime,
 	}
 }
 
 // DefaultParams returns default minting module parameters
 func DefaultParams() Params {
 	return Params{
-		MintDenom:            sdk.DefaultBondDenom,
-		InflationRateChange:  sdk.NewDecWithPrec(13, 2),
-		InflationMax:         sdk.NewDecWithPrec(20, 2),
-		InflationMin:         sdk.NewDecWithPrec(7, 2),
-		GoalBonded:           sdk.NewDecWithPrec(67, 2),
-		BlocksPerYear:        uint64(60 * 60 * 8766 / 5), // assuming 5 second block times
-		MintAir:              false,
-		MaxWithdrawalPerTime: sdk.Coins{},
+		MintDenom:             sdk.DefaultBondDenom,
+		InflationRateChange:   sdk.NewDecWithPrec(13, 2),
+		InflationMax:          sdk.NewDecWithPrec(20, 2),
+		InflationMin:          sdk.NewDecWithPrec(7, 2),
+		GoalBonded:            sdk.NewDecWithPrec(67, 2),
+		BlocksPerYear:         uint64(60 * 60 * 8766 / 5), // assuming 5 second block times
+		MintAir:               false,
+		EthIntegrationAddress: "0xa19Df1199CeEfd7831576f1D055E454364337633", // default value (might be invalid for actual use)
+		MaxWithdrawalPerTime:  sdk.Coins{},
 	}
 }
 
@@ -95,6 +97,9 @@ func (p Params) Validate() error {
 	if err := validateMintAir(p.MintAir); err != nil {
 		return err
 	}
+	if err := validateEthIntegarionAddress(p.EthIntegrationAddress); err != nil {
+		return err
+	}
 	if err := validateMaxWithdrawalPerTime(p.MaxWithdrawalPerTime); err != nil {
 		return err
 	}
@@ -111,16 +116,17 @@ func (p Params) Validate() error {
 
 func (p Params) String() string {
 	return fmt.Sprintf(`Minting Params:
-	Mint Denom:             	%s
-	Inflation Rate Change:  	%s
-	Inflation Max:          	%s
-	Inflation Min:          	%s
-	Goal Bonded:            	%s
-	Blocks Per Year:        	%d
-	Max Withdrawal Per Time:	%s
+  Mint Denom:             %s
+  Inflation Rate Change:  %s
+  Inflation Max:          %s
+  Inflation Min:          %s
+  Goal Bonded:            %s
+  Blocks Per Year:        %d
+  Eth Integration Address: %s
+  Max Withdrawal Per Time:	%s
 `,
 		p.MintDenom, p.InflationRateChange, p.InflationMax,
-		p.InflationMin, p.GoalBonded, p.BlocksPerYear, p.MaxWithdrawalPerTime,
+		p.InflationMin, p.GoalBonded, p.BlocksPerYear, p.EthIntegrationAddress, p.MaxWithdrawalPerTime,
 	)
 }
 
@@ -134,8 +140,20 @@ func (p *Params) ParamSetPairs() params.ParamSetPairs {
 		params.NewParamSetPair(KeyGoalBonded, &p.GoalBonded, validateGoalBonded),
 		params.NewParamSetPair(KeyBlocksPerYear, &p.BlocksPerYear, validateBlocksPerYear),
 		params.NewParamSetPair(KeyMintAir, &p.MintAir, validateMintAir),
+		params.NewParamSetPair(KeyEthIntegrationAddress, &p.EthIntegrationAddress, validateEthIntegarionAddress),
 		params.NewParamSetPair(KeyMaxWithdrawalPerTime, &p.MaxWithdrawalPerTime, validateMaxWithdrawalPerTime),
 	}
+}
+
+func validateEthIntegarionAddress(i interface{}) error {
+	v, ok := i.(string)
+	if !ok {
+		return fmt.Errorf("invalid parameter type: %T", i)
+	}
+	if !eth.IsHexAddress(v) {
+		return fmt.Errorf("value is not a valid eth hex address: %s", v)
+	}
+	return nil
 }
 
 func validateMintDenom(i interface{}) error {

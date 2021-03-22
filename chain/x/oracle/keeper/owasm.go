@@ -34,7 +34,7 @@ func (k Keeper) GetRandomValidators(ctx sdk.Context, size int, id int64) ([]sdk.
 	if err != nil {
 		return nil, sdkerrors.Wrapf(types.ErrBadDrbgInitialization, err.Error())
 	}
-	tryCount := int(k.GetParam(ctx, types.KeySamplingTryCount))
+	tryCount := int(k.GetParamUint64(ctx, types.KeySamplingTryCount))
 	chosenValIndexes := bandrng.ChooseSomeMaxWeight(rng, valPowers, size, tryCount)
 	validators := make([]sdk.ValAddress, size)
 	for i, idx := range chosenValIndexes {
@@ -45,14 +45,14 @@ func (k Keeper) GetRandomValidators(ctx sdk.Context, size int, id int64) ([]sdk.
 
 // PrepareRequest takes an request specification object, performs the prepare call, and saves
 // the request object to store. Also emits events related to the request.
-func (k Keeper) PrepareRequest(ctx sdk.Context, r types.RequestSpec) error {
+func (k Keeper) PrepareRequest(ctx sdk.Context, r types.RequestWithSenderSpec) error {
 	askCount := r.GetAskCount()
-	if askCount > k.GetParam(ctx, types.KeyMaxAskCount) {
-		return sdkerrors.Wrapf(types.ErrInvalidAskCount, "got: %d, max: %d", askCount, k.GetParam(ctx, types.KeyMaxAskCount))
+	if askCount > k.GetParamUint64(ctx, types.KeyMaxAskCount) {
+		return sdkerrors.Wrapf(types.ErrInvalidAskCount, "got: %d, max: %d", askCount, k.GetParamUint64(ctx, types.KeyMaxAskCount))
 	}
 	// Consume gas for data requests. We trust that we have reasonable params that don't cause overflow.
-	ctx.GasMeter().ConsumeGas(k.GetParam(ctx, types.KeyBaseRequestGas), "BASE_REQUEST_FEE")
-	ctx.GasMeter().ConsumeGas(askCount*k.GetParam(ctx, types.KeyPerValidatorRequestGas), "PER_VALIDATOR_REQUEST_FEE")
+	ctx.GasMeter().ConsumeGas(k.GetParamUint64(ctx, types.KeyBaseRequestGas), "BASE_REQUEST_FEE")
+	ctx.GasMeter().ConsumeGas(askCount*k.GetParamUint64(ctx, types.KeyPerValidatorRequestGas), "PER_VALIDATOR_REQUEST_FEE")
 	// Get a random validator set to perform this request.
 	validators, err := k.GetRandomValidators(ctx, int(askCount), k.GetRequestCount(ctx)+1)
 	if err != nil {
@@ -64,18 +64,33 @@ func (k Keeper) PrepareRequest(ctx sdk.Context, r types.RequestSpec) error {
 		ctx.BlockHeight(), ctx.BlockTime(), r.GetClientID(), nil,
 	)
 	// Create an execution environment and call Owasm prepare function.
-	env := types.NewPrepareEnv(req, int64(k.GetParam(ctx, types.KeyMaxRawRequestCount)))
+	env := types.NewPrepareEnv(req, int64(k.GetParamUint64(ctx, types.KeyMaxRawRequestCount)), int64(k.GetParamUint64(ctx, types.KeyMaxDataSize)))
 	script, err := k.GetOracleScript(ctx, req.OracleScriptID)
 	if err != nil {
 		return err
 	}
 	code := k.GetFile(script.Filename)
-	output, err := owasm.Prepare(code, types.WasmPrepareGas, types.MaxDataSize, env)
+
+	maxDataSize := k.GetParamUint64(ctx, types.KeyMaxDataSize)
+	output, err := owasm.Prepare(code, types.WasmPrepareGas, int64(maxDataSize), env)
 	if err != nil {
 		return sdkerrors.Wrapf(types.ErrBadWasmExecution, err.Error())
 	}
-	// Preparation complete! It's time to collect raw request ids.
+
+	// calculate fee for each data source
 	req.RawRequests = env.GetRawRequests()
+	fee := k.GetDataRequesterBasicFeeParam(ctx)
+
+	err = k.supplyKeeper.SendCoinsFromAccountToModule(ctx, r.GetSender(), types.ModuleName, sdk.NewCoins(fee.Value()))
+	if err != nil {
+		return sdkerrors.Wrap(err, "sending coins from account to module")
+	}
+
+	oraclePool := k.GetOraclePool(ctx)
+	oraclePool.DataProvidersPool = oraclePool.DataProvidersPool.Add(sdk.NewDecCoinFromCoin(fee.Value()))
+	k.SetOraclePool(ctx, oraclePool)
+
+	// Preparation complete! Nothing can go wrong now (naive). It's time to collect raw request ids.
 	if len(req.RawRequests) == 0 {
 		return types.ErrEmptyRawRequests
 	}
@@ -120,7 +135,8 @@ func (k Keeper) ResolveRequest(ctx sdk.Context, reqID types.RequestID) {
 	env := types.NewExecuteEnv(req, k.GetReports(ctx, reqID))
 	script := k.MustGetOracleScript(ctx, req.OracleScriptID)
 	code := k.GetFile(script.Filename)
-	output, err := owasm.Execute(code, types.WasmExecuteGas, types.MaxDataSize, env)
+	maxDataSize := k.GetParamUint64(ctx, types.KeyMaxDataSize)
+	output, err := owasm.Execute(code, types.WasmExecuteGas, int64(maxDataSize), env)
 	if err != nil {
 		k.ResolveFailure(ctx, reqID, err.Error())
 	} else if env.Retdata == nil {

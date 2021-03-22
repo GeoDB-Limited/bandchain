@@ -2,6 +2,8 @@ package oracle_test
 
 import (
 	"fmt"
+	"github.com/cosmos/cosmos-sdk/x/bank"
+	distr "github.com/cosmos/cosmos-sdk/x/distribution"
 	"testing"
 	"time"
 
@@ -10,8 +12,8 @@ import (
 	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/libs/kv"
 
+	"github.com/GeoDB-Limited/odincore/chain/x/common/testapp"
 	"github.com/GeoDB-Limited/odincore/chain/x/oracle"
-	"github.com/GeoDB-Limited/odincore/chain/x/oracle/testapp"
 	"github.com/GeoDB-Limited/odincore/chain/x/oracle/types"
 )
 
@@ -20,7 +22,7 @@ func parseEventAttribute(attr interface{}) []byte {
 }
 
 func TestSuccessRequestOracleData(t *testing.T) {
-	app, ctx, k := testapp.CreateTestInput(true)
+	app, ctx, k := testapp.CreateTestInput(true, true)
 
 	ctx = ctx.WithBlockHeight(4).WithBlockTime(time.Unix(1581589790, 0))
 	handler := oracle.NewHandler(k)
@@ -91,8 +93,16 @@ func TestSuccessRequestOracleData(t *testing.T) {
 		{Key: []byte(types.AttributeKeyID), Value: parseEventAttribute(resPacket.RequestID)},
 		{Key: []byte(types.AttributeKeyResolveStatus), Value: parseEventAttribute(uint32(resPacket.ResolveStatus))},
 		{Key: []byte(types.AttributeKeyResult), Value: []byte("62656562")},
-		{Key: []byte(types.AttributeKeyGasUsed), Value: []byte("260")},
-	}}}
+		{Key: []byte(types.AttributeKeyGasUsed), Value: []byte("1028")}, // TODO: might change
+	}}, {Type: bank.EventTypeTransfer, Attributes: []kv.Pair{
+		{Key: []byte(bank.AttributeKeyRecipient), Value: []byte(testapp.Owner.Address.String())},
+		{Key: []byte(bank.AttributeKeySender), Value: []byte(app.SupplyKeeper.GetModuleAddress(distr.ModuleName).String())},
+		{Key: []byte(sdk.AttributeKeyAmount), Value: []byte("21geo")},
+	}},
+		{Type: sdk.EventTypeMessage, Attributes: []kv.Pair{
+			{Key: []byte(bank.AttributeKeySender), Value: []byte(app.SupplyKeeper.GetModuleAddress(distr.ModuleName).String())},
+		}},
+	}
 
 	require.Equal(t, expectEvents, result.GetEvents())
 

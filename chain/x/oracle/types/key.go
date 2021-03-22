@@ -47,6 +47,8 @@ var (
 	ValidatorStatusKeyPrefix = []byte{0x06}
 	// DataProviderRewardsKeyPrefix is the prefix for the data provider address with reward
 	DataProviderRewardsKeyPrefix = []byte{0x07}
+	// DataRequesterFeesKeyPrefix is the prefix for the data requester address with accumulated fee
+	DataRequesterFeesKeyPrefix = []byte{0x08}
 	// ResultStoreKeyPrefix is the prefix for request result store.
 	ResultStoreKeyPrefix = []byte{0xff}
 )
@@ -102,4 +104,8 @@ func ReportersOfValidatorPrefixKey(val sdk.ValAddress) []byte {
 
 func DataProviderRewardsPrefixKey(acc sdk.AccAddress) []byte {
 	return append(DataProviderRewardsKeyPrefix, acc.Bytes()...)
+}
+
+func DataRequesterFeePrefixKey(acc sdk.AccAddress) []byte {
+	return append(DataRequesterFeesKeyPrefix, acc.Bytes()...)
 }

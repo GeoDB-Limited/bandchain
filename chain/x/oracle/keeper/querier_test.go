@@ -2,13 +2,14 @@ package keeper_test
 
 import (
 	"encoding/json"
+	commontypes "github.com/GeoDB-Limited/odincore/chain/x/common/types"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 	abci "github.com/tendermint/tendermint/abci/types"
 
+	"github.com/GeoDB-Limited/odincore/chain/x/common/testapp"
 	"github.com/GeoDB-Limited/odincore/chain/x/oracle/keeper"
-	"github.com/GeoDB-Limited/odincore/chain/x/oracle/testapp"
 	"github.com/GeoDB-Limited/odincore/chain/x/oracle/types"
 )
 
@@ -60,7 +61,7 @@ func TestQueryPendingRequests(t *testing.T) {
 			raw, err := q(ctx, append([]string{types.QueryPendingRequests}, tt.args...), abci.RequestQuery{})
 			require.NoError(t, err)
 
-			var queryRequest types.QueryResult
+			var queryRequest commontypes.QueryResult
 			require.NoError(t, json.Unmarshal(raw, &queryRequest))
 
 			var requestIDs []types.RequestID

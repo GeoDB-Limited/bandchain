@@ -132,6 +132,10 @@ func handleMsgEditOracleScript(ctx sdk.Context, k Keeper, m MsgEditOracleScript)
 }
 
 func handleMsgRequestData(ctx sdk.Context, k Keeper, m MsgRequestData) (*sdk.Result, error) {
+	maxCalldataSize := k.GetParamUint64(ctx, types.KeyMaxCalldataSize)
+	if len(m.Calldata) > int(maxCalldataSize) {
+		return nil, types.WrapMaxError(types.ErrTooLargeCalldata, len(m.Calldata), int(maxCalldataSize))
+	}
 	err := k.PrepareRequest(ctx, &m)
 	if err != nil {
 		return nil, err
@@ -139,6 +143,7 @@ func handleMsgRequestData(ctx sdk.Context, k Keeper, m MsgRequestData) (*sdk.Res
 	return &sdk.Result{Events: ctx.EventManager().Events()}, nil
 }
 
+// TODO: change the gas price calculation in yoda
 func handleMsgReportData(ctx sdk.Context, k Keeper, m MsgReportData) (*sdk.Result, error) {
 	if !k.IsReporter(ctx, m.Validator, m.Reporter) {
 		return nil, types.ErrReporterNotAuthorized
@@ -146,33 +151,38 @@ func handleMsgReportData(ctx sdk.Context, k Keeper, m MsgReportData) (*sdk.Resul
 	if m.RequestID <= k.GetRequestLastExpired(ctx) {
 		return nil, types.ErrRequestAlreadyExpired
 	}
+	maxDataSize := k.GetParamUint64(ctx, types.KeyMaxDataSize)
+	for _, r := range m.RawReports {
+		if len(r.Data) > int(maxDataSize) {
+			return nil, types.WrapMaxError(types.ErrTooLargeRawReportData, len(r.Data), int(maxDataSize))
+		}
+	}
 
 	err := k.AddReport(ctx, m.RequestID, types.NewReport(m.Validator, !k.HasResult(ctx, m.RequestID), m.RawReports))
 	if err != nil {
 		return nil, err
 	}
 
-	// at this moment we are sure, that all the raw reports here are validated
-	// so we can distribute the reward for them in end-block
-	rawReportsMap := make(map[types.ExternalID]types.RawReport)
-	for _, rawRep := range m.GetRawReports() {
-		rawReportsMap[rawRep.ExternalID] = rawRep
-	}
-
 	req := k.MustGetRequest(ctx, m.RequestID)
-	dataProviderRewardPerByte := k.GetDataProviderRewardPerByteParam(ctx)
-	for _, rawReq := range req.GetRawRequests() {
-		rawRep, ok := rawReportsMap[rawReq.GetExternalID()]
-		if !ok {
-			// this request had no report
-			continue
+	if k.GetReportCount(ctx, m.RequestID) == req.MinCount {
+		// at this moment we are sure, that all the raw reports here are validated
+		// so we can distribute the reward for them in end-block
+		rawReportsMap := make(map[types.ExternalID]types.RawReport)
+		for _, rawRep := range m.GetRawReports() {
+			rawReportsMap[rawRep.ExternalID] = rawRep
 		}
 
-		ds := k.MustGetDataSource(ctx, rawReq.GetDataSourceID())
-		k.SetDataProviderAccumulatedReward(ctx, ds.Owner, utils.CalculateReward(rawRep.Data, dataProviderRewardPerByte.Value()))
-	}
+		dataProviderRewardPerByte := k.GetDataProviderRewardPerByteParam(ctx)
+		for _, rawReq := range req.GetRawRequests() {
+			rawRep, ok := rawReportsMap[rawReq.GetExternalID()]
+			if !ok {
+				// this request had no report
+				continue
+			}
 
-	if k.GetReportCount(ctx, m.RequestID) == req.MinCount {
+			ds := k.MustGetDataSource(ctx, rawReq.GetDataSourceID())
+			k.SetDataProviderAccumulatedReward(ctx, ds.Owner, utils.CalculateReward(rawRep.Data, dataProviderRewardPerByte.Value()))
+		}
 		// At the exact moment when the number of reports is sufficient, we add the request to
 		// the pending resolve list. This can happen at most one time for any request.
 		k.AddPendingRequest(ctx, m.RequestID)

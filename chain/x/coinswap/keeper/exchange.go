@@ -18,7 +18,7 @@ func (k Keeper) ExchangeDenom(ctx sdk.Context, from, to commontypes.Denom, amt s
 	}
 
 	// first send source tokens to module
-	err = k.supplyKeeper.SendCoinsFromAccountToModule(ctx, requester, distr.ModuleName, sdk.NewCoins(amt))
+	err = k.distrKeeper.FundCommunityPool(ctx, sdk.NewCoins(amt), requester)
 	if err != nil {
 		return sdkerrors.Wrapf(err, "sending coins from account: %s, to module: %s", requester.String(), distr.ModuleName)
 	}
@@ -28,27 +28,9 @@ func (k Keeper) ExchangeDenom(ctx sdk.Context, from, to commontypes.Denom, amt s
 		k.Logger(ctx).With("coins", remainder.String()).Info("performing exchange according to limited precision some coins are lost")
 	}
 
-	feePool := k.distrKeeper.GetFeePool(ctx)
-
-	// first add received tokens to fee pool
-	feePool.CommunityPool = feePool.CommunityPool.Add(sdk.NewDecCoinsFromCoins(sdk.NewCoins(amt)...)...)
-
-	k.distrKeeper.SetFeePool(ctx, feePool)
-
-	oraclePool := k.oracleKeeper.GetOraclePool(ctx)
-
-	// then subtract requested tokens from
-	diff, hasNeg := oraclePool.DataProvidersPool.SafeSub(sdk.NewDecCoins(convertedAmt))
-	if hasNeg {
-		return sdkerrors.Wrap(sdkerrors.ErrInsufficientFunds, "data providers pool does not have enough funds")
-	}
-
-	oraclePool.DataProvidersPool = diff
-	k.oracleKeeper.SetOraclePool(ctx, oraclePool)
-
-	err = k.supplyKeeper.SendCoinsFromModuleToAccount(ctx, oracle.ModuleName, requester, sdk.NewCoins(toSend))
+	err = k.oracleKeeper.WithdrawOraclePool(ctx, sdk.NewCoins(toSend), requester)
 	if err != nil {
-		return sdkerrors.Wrapf(err, "sending coins from module: %s, to account: %s", distr.ModuleName, requester.String())
+		return sdkerrors.Wrapf(err, "sending coins from module: %s, to account: %s", oracle.ModuleName, requester.String())
 	}
 
 	return nil

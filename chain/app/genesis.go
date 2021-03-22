@@ -27,7 +27,7 @@ type GenesisState map[string]json.RawMessage
 // NewDefaultGenesisState generates the default state for the application.
 func NewDefaultGenesisState() GenesisState {
 	cdc := MakeCodec()
-	denom := "uband"
+	denom := "odin"
 	// Get default genesis states of the modules we are to override.
 	authGenesis := auth.DefaultGenesisState()
 	stakingGenesis := staking.DefaultGenesisState()
