@@ -1,66 +1,74 @@
 package types
 
 import (
-	"errors"
 	"fmt"
-	"strings"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/x/params"
+	"strings"
 )
 
 // Parameter store keys
 var (
-	KeyMintDenom           = []byte("MintDenom")
-	KeyInflationRateChange = []byte("InflationRateChange")
-	KeyInflationMax        = []byte("InflationMax")
-	KeyInflationMin        = []byte("InflationMin")
-	KeyGoalBonded          = []byte("GoalBonded")
-	KeyBlocksPerYear       = []byte("BlocksPerYear")
-	KeyMintAir             = []byte("MintAir")
+	KeyMintDenom            = []byte("MintDenom")
+	KeyInflationRateChange  = []byte("InflationRateChange")
+	KeyInflationMax         = []byte("InflationMax")
+	KeyInflationMin         = []byte("InflationMin")
+	KeyGoalBonded           = []byte("GoalBonded")
+	KeyBlocksPerYear        = []byte("BlocksPerYear")
+	KeyMintAir              = []byte("MintAir")
+	KeyMaxWithdrawalPerTime = []byte("MaxWithdrawalPerTime")
 )
 
-// mint parameters
+// Params defines a mint parameters
 type Params struct {
-	MintDenom           string  `json:"mint_denom" yaml:"mint_denom"`                       // type of coin to mint
-	InflationRateChange sdk.Dec `json:"inflation_rate_change" yaml:"inflation_rate_change"` // maximum annual change in inflation rate
-	InflationMax        sdk.Dec `json:"inflation_max" yaml:"inflation_max"`                 // maximum inflation rate
-	InflationMin        sdk.Dec `json:"inflation_min" yaml:"inflation_min"`                 // minimum inflation rate
-	GoalBonded          sdk.Dec `json:"goal_bonded" yaml:"goal_bonded"`                     // goal of percent bonded atoms
-	BlocksPerYear       uint64  `json:"blocks_per_year" yaml:"blocks_per_year"`             // expected blocks per year
-	MintAir             bool    `json:"mint_air" yaml:"mint_air"`
+	MintDenom            string    `json:"mint_denom" yaml:"mint_denom"`                           // type of coin to mint
+	InflationRateChange  sdk.Dec   `json:"inflation_rate_change" yaml:"inflation_rate_change"`     // maximum annual change in inflation rate
+	InflationMax         sdk.Dec   `json:"inflation_max" yaml:"inflation_max"`                     // maximum inflation rate
+	InflationMin         sdk.Dec   `json:"inflation_min" yaml:"inflation_min"`                     // minimum inflation rate
+	GoalBonded           sdk.Dec   `json:"goal_bonded" yaml:"goal_bonded"`                         // goal of percent bonded atoms
+	BlocksPerYear        uint64    `json:"blocks_per_year" yaml:"blocks_per_year"`                 // expected blocks per year
+	MintAir              bool      `json:"mint_air" yaml:"mint_air"`                               // flag if mint from air
+	MaxWithdrawalPerTime sdk.Coins `json:"max_withdrawal_per_time" yaml:"max_withdrawal_per_time"` // max to mint in one withdraw
 }
 
-// ParamTable for minting module.
+// ParamKeyTable defines a key table for minting module.
 func ParamKeyTable() params.KeyTable {
 	return params.NewKeyTable().RegisterParamSet(&Params{})
 }
 
+// NewParams returns a new mint params
 func NewParams(
-	mintDenom string, inflationRateChange, inflationMax, inflationMin, goalBonded sdk.Dec, blocksPerYear uint64, mintAir bool,
+	mintDenom string,
+	inflationRateChange, inflationMax, inflationMin, goalBonded sdk.Dec,
+	MaxWithdrawalPerTime sdk.Coins,
+	blocksPerYear uint64,
+	mintAir bool,
 ) Params {
 
 	return Params{
-		MintDenom:           mintDenom,
-		InflationRateChange: inflationRateChange,
-		InflationMax:        inflationMax,
-		InflationMin:        inflationMin,
-		GoalBonded:          goalBonded,
-		BlocksPerYear:       blocksPerYear,
-		MintAir:             mintAir,
+		MintDenom:            mintDenom,
+		InflationRateChange:  inflationRateChange,
+		InflationMax:         inflationMax,
+		InflationMin:         inflationMin,
+		GoalBonded:           goalBonded,
+		BlocksPerYear:        blocksPerYear,
+		MintAir:              mintAir,
+		MaxWithdrawalPerTime: MaxWithdrawalPerTime,
 	}
 }
 
-// default minting module parameters
+// DefaultParams returns default minting module parameters
 func DefaultParams() Params {
 	return Params{
-		MintDenom:           sdk.DefaultBondDenom,
-		InflationRateChange: sdk.NewDecWithPrec(13, 2),
-		InflationMax:        sdk.NewDecWithPrec(20, 2),
-		InflationMin:        sdk.NewDecWithPrec(7, 2),
-		GoalBonded:          sdk.NewDecWithPrec(67, 2),
-		BlocksPerYear:       uint64(60 * 60 * 8766 / 5), // assuming 5 second block times
-		MintAir:             false,
+		MintDenom:            sdk.DefaultBondDenom,
+		InflationRateChange:  sdk.NewDecWithPrec(13, 2),
+		InflationMax:         sdk.NewDecWithPrec(20, 2),
+		InflationMin:         sdk.NewDecWithPrec(7, 2),
+		GoalBonded:           sdk.NewDecWithPrec(67, 2),
+		BlocksPerYear:        uint64(60 * 60 * 8766 / 5), // assuming 5 second block times
+		MintAir:              false,
+		MaxWithdrawalPerTime: sdk.Coins{},
 	}
 }
 
@@ -87,6 +95,9 @@ func (p Params) Validate() error {
 	if err := validateMintAir(p.MintAir); err != nil {
 		return err
 	}
+	if err := validateMaxWithdrawalPerTime(p.MaxWithdrawalPerTime); err != nil {
+		return err
+	}
 	if p.InflationMax.LT(p.InflationMin) {
 		return fmt.Errorf(
 			"max inflation (%s) must be greater than or equal to min inflation (%s)",
@@ -100,15 +111,16 @@ func (p Params) Validate() error {
 
 func (p Params) String() string {
 	return fmt.Sprintf(`Minting Params:
-  Mint Denom:             %s
-  Inflation Rate Change:  %s
-  Inflation Max:          %s
-  Inflation Min:          %s
-  Goal Bonded:            %s
-  Blocks Per Year:        %d
+	Mint Denom:             	%s
+	Inflation Rate Change:  	%s
+	Inflation Max:          	%s
+	Inflation Min:          	%s
+	Goal Bonded:            	%s
+	Blocks Per Year:        	%d
+	Max Withdrawal Per Time:	%s
 `,
 		p.MintDenom, p.InflationRateChange, p.InflationMax,
-		p.InflationMin, p.GoalBonded, p.BlocksPerYear,
+		p.InflationMin, p.GoalBonded, p.BlocksPerYear, p.MaxWithdrawalPerTime,
 	)
 }
 
@@ -122,6 +134,7 @@ func (p *Params) ParamSetPairs() params.ParamSetPairs {
 		params.NewParamSetPair(KeyGoalBonded, &p.GoalBonded, validateGoalBonded),
 		params.NewParamSetPair(KeyBlocksPerYear, &p.BlocksPerYear, validateBlocksPerYear),
 		params.NewParamSetPair(KeyMintAir, &p.MintAir, validateMintAir),
+		params.NewParamSetPair(KeyMaxWithdrawalPerTime, &p.MaxWithdrawalPerTime, validateMaxWithdrawalPerTime),
 	}
 }
 
@@ -132,7 +145,7 @@ func validateMintDenom(i interface{}) error {
 	}
 
 	if strings.TrimSpace(v) == "" {
-		return errors.New("mint denom cannot be blank")
+		return sdkerrors.Wrap(ErrInvalidMintDenom, "mint denom cannot be blank")
 	}
 	if err := sdk.ValidateDenom(v); err != nil {
 		return err
@@ -200,6 +213,21 @@ func validateGoalBonded(i interface{}) error {
 	}
 	if v.GT(sdk.OneDec()) {
 		return fmt.Errorf("goal bonded too large: %s", v)
+	}
+
+	return nil
+}
+
+func validateMaxWithdrawalPerTime(i interface{}) error {
+	v, ok := i.(sdk.Coins)
+	if !ok {
+		return fmt.Errorf("invalid parameter type: %T", i)
+	}
+	if !v.IsValid() {
+		return fmt.Errorf("max withdrawal per time parameter is not valid: %s", v)
+	}
+	if v.IsAnyNegative() {
+		return fmt.Errorf("max withdrawal per time cannot be negative: %s", v)
 	}
 
 	return nil

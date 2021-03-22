@@ -1,8 +1,5 @@
 package types
 
-// MinterKey is used for the keeper store
-var MinterKey = []byte{0x00}
-
 // nolint
 const (
 	// ModuleName
@@ -16,6 +13,9 @@ const (
 	// StoreKey is the default store key for mint
 	StoreKey = ModuleName
 
+	// RouterKey is the message route for mint
+	RouterKey = ModuleName
+
 	// QuerierRoute is the querier route for the minting store.
 	QuerierRoute = StoreKey
 
@@ -23,4 +23,13 @@ const (
 	QueryParameters       = "parameters"
 	QueryInflation        = "inflation"
 	QueryAnnualProvisions = "annual_provisions"
+)
+
+var (
+	// GlobalStoreKeyPrefix is used as prefix for the store keys
+	GlobalStoreKeyPrefix = []byte{0x00}
+	// MinterKey is used for the keeper store
+	MinterKey = append(GlobalStoreKeyPrefix, []byte("Minter")...)
+	// MintPoolStoreKey is the key for global mint pool state
+	MintPoolStoreKey = append(GlobalStoreKeyPrefix, []byte("MintPool")...)
 )
