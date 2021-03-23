@@ -237,8 +237,8 @@ func NewBandApp(
 	// NOTE: The genutils module must occur after staking so that pools are
 	// properly initialized with tokens from genesis accounts.
 	app.mm.SetOrderInitGenesis(
-		auth.ModuleName, distr.ModuleName, staking.ModuleName, bank.ModuleName, oracle.ModuleName, supply.ModuleName,
-		slashing.ModuleName, gov.ModuleName, odinmint.ModuleName, crisis.ModuleName,
+		auth.ModuleName, distr.ModuleName, staking.ModuleName, bank.ModuleName, oracle.ModuleName,
+		slashing.ModuleName, gov.ModuleName, odinmint.ModuleName, supply.ModuleName, crisis.ModuleName,
 		genutil.ModuleName, evidence.ModuleName, coinswap.ModuleName,
 	)
 	app.mm.RegisterInvariants(&app.CrisisKeeper)

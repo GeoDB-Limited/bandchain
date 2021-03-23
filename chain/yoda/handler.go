@@ -251,7 +251,8 @@ func handleRawRequest(c *Context, l *Logger, req rawRequest, key keys.Info, id t
 		}
 	}
 
-	result, err := c.executor.Exec(exec, req.calldata, map[string]interface{}{
+	// TODO: refactor BAND ENV to ODIN ENV
+	result, err := c.executor.Exec(exec, fmt.Sprintf("%s %s", req.dataSource.Owner.String(), req.calldata), map[string]interface{}{
 		"BAND_CHAIN_ID":    vmsg.ChainID,
 		"BAND_VALIDATOR":   vmsg.Validator.String(),
 		"BAND_REQUEST_ID":  strconv.Itoa(int(vmsg.RequestID)),
@@ -269,7 +270,7 @@ func handleRawRequest(c *Context, l *Logger, req rawRequest, key keys.Info, id t
 	} else {
 		l.Debug(
 			":sparkles: Query data done with calldata: %q, result: %q, exitCode: %d",
-			req.calldata, result.Output, result.Code,
+			fmt.Sprintf("%s %s", req.dataSource.Owner.String(), req.calldata), result.Output, result.Code,
 		)
 		processingResultCh <- processingResult{
 			rawReport: types.NewRawReport(req.externalID, result.Code, result.Output),

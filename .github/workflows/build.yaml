@@ -9,6 +9,9 @@ jobs:
       - name: Code checkout
         uses: actions/checkout@v2
 
+      - name: Inject slug/short variables
+        uses: rlespinasse/github-slug-action@v3.x
+
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v1
 
@@ -27,7 +30,7 @@ jobs:
           context: .
           file: ./chain/Dockerfile.ci
           push: true
-          tags: odinprotocol/core:latest
+          tags: odinprotocol/core:${{ env.GITHUB_REF_SLUG }}
 
 
 
