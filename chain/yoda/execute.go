@@ -158,7 +158,7 @@ func GetExecutable(c *Context, l *Logger, hash string) ([]byte, error) {
 		l.Debug(":card_file_box: Found data source hash: %s in cache file", hash)
 	}
 
-	l.Debug(":balloon: Received data source hash: %s content: %q", hash, resValue[:32])
+	l.Debug(":balloon: Received data source hash: %s content: %q", hash, resValue[:128])
 	return resValue, nil
 }
 
