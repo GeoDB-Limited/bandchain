@@ -38,7 +38,7 @@ jobs:
           context: .
           file: ./chain/Dockerfile.ci
           push: true
-          tags: odinprotocol/core:${{ env.GITHUB_REF_SLUG }}
+          tags: odinprotocol/core:latest
 
 
 
