@@ -2,8 +2,8 @@ package cli
 
 import (
 	"fmt"
+	"github.com/GeoDB-Limited/odincore/chain/x/common/client/cli"
 	"github.com/GeoDB-Limited/odincore/chain/x/mint/internal/types"
-
 	"github.com/spf13/cobra"
 
 	"github.com/cosmos/cosmos-sdk/client"
@@ -29,6 +29,7 @@ func GetQueryCmd(cdc *codec.Codec) *cobra.Command {
 			GetCmdQueryInflation(cdc),
 			GetCmdQueryAnnualProvisions(cdc),
 			GetCmdQueryEthIntegrationAddress(cdc),
+			GetCmdQueryTreasuryPool(cdc),
 		)...,
 	)
 
@@ -132,6 +133,24 @@ func GetCmdQueryEthIntegrationAddress(cdc *codec.Codec) *cobra.Command {
 				return err
 			}
 			return cliCtx.PrintOutput(ethIntegrationAddress)
+		},
+	}
+}
+
+// GetCmdQueryTreasuryPool returns the command for fetching treasury pool info
+func GetCmdQueryTreasuryPool(cdc *codec.Codec) *cobra.Command {
+	return &cobra.Command{
+		Use:   "treasury-pool",
+		Args:  cobra.NoArgs,
+		Short: "Query the amount of coins in the treasury pool",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			cliCtx := context.NewCLIContext().WithCodec(cdc)
+
+			bz, _, err := cliCtx.Query(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryTreasuryPool))
+			if err != nil {
+				return err
+			}
+			return cli.PrintOutput(cliCtx, cdc, bz, &[]sdk.Coin{})
 		},
 	}
 }

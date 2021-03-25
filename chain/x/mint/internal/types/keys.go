@@ -25,6 +25,7 @@ const (
 	QueryInflation             = "inflation"
 	QueryAnnualProvisions      = "annual_provisions"
 	QueryEthIntegrationAddress = "eth_integration_address"
+	QueryTreasuryPool          = "treasury_pool"
 )
 
 var (
