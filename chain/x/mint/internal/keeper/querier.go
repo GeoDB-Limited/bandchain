@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	commontypes "github.com/GeoDB-Limited/odincore/chain/x/common/types"
 	"github.com/GeoDB-Limited/odincore/chain/x/mint/internal/types"
 	abci "github.com/tendermint/tendermint/abci/types"
 
@@ -24,6 +25,9 @@ func NewQuerier(k Keeper) sdk.Querier {
 
 		case types.QueryEthIntegrationAddress:
 			return queryEthIntegrationAddress(ctx, k)
+
+		case types.QueryTreasuryPool:
+			return queryTreasuryPool(ctx, k)
 
 		default:
 			return nil, sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "unknown query path: %s", path[0])
@@ -72,4 +76,8 @@ func queryEthIntegrationAddress(ctx sdk.Context, k Keeper) ([]byte, error) {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
 	}
 	return res, nil
+}
+
+func queryTreasuryPool(ctx sdk.Context, k Keeper) ([]byte, error) {
+	return commontypes.QueryOK(types.ModuleCdc, k.GetMintPool(ctx).TreasuryPool)
 }

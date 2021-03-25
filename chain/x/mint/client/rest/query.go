@@ -2,6 +2,7 @@ package rest
 
 import (
 	"fmt"
+	commonrest "github.com/GeoDB-Limited/odincore/chain/x/common/client/rest"
 	"github.com/GeoDB-Limited/odincore/chain/x/mint/internal/types"
 	"net/http"
 
@@ -30,6 +31,11 @@ func registerQueryRoutes(cliCtx context.CLIContext, r *mux.Router) {
 	r.HandleFunc(
 		fmt.Sprintf("/%s/%s", types.QueryRoute, types.QueryEthIntegrationAddress),
 		queryEthIntegrationAddressHandlerFn(cliCtx),
+	).Methods("GET")
+
+	r.HandleFunc(
+		fmt.Sprintf("/%s/%s", types.QueryRoute, types.QueryTreasuryPool),
+		queryTreasuryPoolHandlerFn(cliCtx),
 	).Methods("GET")
 }
 
@@ -110,5 +116,24 @@ func queryEthIntegrationAddressHandlerFn(cliCtx context.CLIContext) http.Handler
 
 		cliCtx = cliCtx.WithHeight(height)
 		rest.PostProcessResponse(w, cliCtx, res)
+	}
+}
+
+func queryTreasuryPoolHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		route := fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryTreasuryPool)
+
+		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
+		if !ok {
+			return
+		}
+
+		bz, height, err := cliCtx.Query(route)
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+
+		commonrest.PostProcessQueryResponse(w, cliCtx.WithHeight(height), bz)
 	}
 }
