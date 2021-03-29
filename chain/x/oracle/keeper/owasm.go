@@ -10,7 +10,6 @@ import (
 
 	"github.com/GeoDB-Limited/odincore/chain/pkg/bandrng"
 	"github.com/GeoDB-Limited/odincore/chain/x/oracle/types"
-	owasm "github.com/GeoDB-Limited/odincore/go-owasm/api"
 )
 
 // GetRandomValidators returns a pseudorandom subset of active validators. Each validator has

@@ -173,7 +173,7 @@ func handlePendingRequest(c *Context, l *Logger, id types.RequestID) {
 
 		hash, ok := c.dataSourceCache.Load(raw.DataSourceID)
 		if !ok {
-			l.Error(":skull: couldn't load data source id from cache")
+			l.Error(":skull: couldn't load data source id from cache", c)
 			panic(fmt.Errorf("couldn't load data source id from cache"))
 		}
 

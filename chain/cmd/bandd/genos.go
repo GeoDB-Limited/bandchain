@@ -16,7 +16,7 @@ import (
 	"github.com/GeoDB-Limited/odincore/chain/pkg/filecache"
 	"github.com/GeoDB-Limited/odincore/chain/x/oracle"
 	"github.com/GeoDB-Limited/odincore/chain/x/oracle/types"
-	"github.com/GeoDB-Limited/odincore/go-owasm/api"
+	"github.com/bandprotocol/go-owasm/api"
 )
 
 // AddGenesisOracleScriptCmd returns add-oracle-script cobra Command.

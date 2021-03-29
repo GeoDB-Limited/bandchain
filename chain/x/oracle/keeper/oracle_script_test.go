@@ -7,7 +7,6 @@ import (
 
 	"github.com/GeoDB-Limited/odincore/chain/x/common/testapp"
 	"github.com/GeoDB-Limited/odincore/chain/x/oracle/types"
-	"github.com/GeoDB-Limited/odincore/go-owasm/api"
 )
 
 func TestHasOracleScript(t *testing.T) {

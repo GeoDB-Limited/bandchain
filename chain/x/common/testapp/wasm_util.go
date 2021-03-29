@@ -6,7 +6,6 @@ import (
 	"os/exec"
 
 	"github.com/GeoDB-Limited/odincore/chain/x/oracle/types"
-	"github.com/GeoDB-Limited/odincore/go-owasm/api"
 )
 
 func compile(code []byte) []byte {

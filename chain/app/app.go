@@ -38,7 +38,7 @@ import (
 
 	"github.com/GeoDB-Limited/odincore/chain/x/oracle"
 	bandante "github.com/GeoDB-Limited/odincore/chain/x/oracle/ante"
-	"github.com/GeoDB-Limited/go-owasm/api"
+	"github.com/bandprotocol/go-owasm/api"
 )
 
 const (
