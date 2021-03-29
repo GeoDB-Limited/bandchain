@@ -27,6 +27,7 @@ import (
 	"github.com/GeoDB-Limited/odincore/chain/x/oracle"
 	me "github.com/GeoDB-Limited/odincore/chain/x/oracle/keeper"
 	"github.com/GeoDB-Limited/odincore/chain/x/oracle/types"
+	owasm "github.com/bandprotocol/go-owasm/api"
 )
 
 // Account is a data structure to store key of test account.
@@ -50,6 +51,7 @@ var (
 	Validator3         Account
 	DataSources        []types.DataSource
 	OracleScripts      []types.OracleScript
+	OwasmVM       *owasm.Vm
 )
 
 // nolint
@@ -77,6 +79,11 @@ func init() {
 	Validator3 = createArbitraryAccount(r)
 	OraclePoolProvider = createArbitraryAccount(r)
 	FeePoolProvider = createArbitraryAccount(r)
+	owasmVM, err := owasm.NewVm(10)
+	if err != nil {
+		panic(err)
+	}
+	OwasmVM = owasmVM
 }
 
 func createArbitraryAccount(r *rand.Rand) Account {
@@ -157,7 +164,7 @@ func NewSimApp(chainID string, logger log.Logger) *bandapp.BandApp {
 	}
 	viper.Set(cli.HomeFlag, dir)
 	db := dbm.NewMemDB()
-	app := bandapp.NewBandApp(logger, db, nil, true, 0, map[int64]bool{}, "", false)
+	app := bandapp.NewBandApp(logger, db, nil, true, 0, map[int64]bool{}, "", false, 0)
 	genesis := bandapp.NewDefaultGenesisState()
 	// Fund seed accounts and validators with 1000000odin and 100000000odin initially.
 	authGenesis := auth.NewGenesisState(auth.DefaultParams(), []authexported.GenesisAccount{

@@ -30,14 +30,14 @@ func handleTransaction(c *Context, l *Logger, tx tmtypes.TxResult) {
 
 	logs, err := sdk.ParseABCILogs(tx.Result.Log)
 	if err != nil {
-		l.Error(":cold_sweat: Failed to parse transaction logs with error: %s", err.Error())
+		l.Error(":cold_sweat: Failed to parse transaction logs with error: %s", c, err.Error())
 		return
 	}
 
 	for _, log := range logs {
 		messageType, err := GetEventValue(log, sdk.EventTypeMessage, sdk.AttributeKeyAction)
 		if err != nil {
-			l.Error(":cold_sweat: Failed to get message action type with error: %s", err.Error())
+			l.Error(":cold_sweat: Failed to get message action type with error: %s", c, err.Error())
 			continue
 		}
 
@@ -60,13 +60,13 @@ func handleTransaction(c *Context, l *Logger, tx tmtypes.TxResult) {
 func handleRequestLog(c *Context, l *Logger, log sdk.ABCIMessageLog) {
 	idStr, err := GetEventValue(log, types.EventTypeRequest, types.AttributeKeyID)
 	if err != nil {
-		l.Error(":cold_sweat: Failed to parse request id with error: %s", err.Error())
+		l.Error(":cold_sweat: Failed to parse request id with error: %s", c, err.Error())
 		return
 	}
 
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
-		l.Error(":cold_sweat: Failed to convert %s to integer with error: %s", idStr, err.Error())
+		l.Error(":cold_sweat: Failed to convert %s to integer with error: %s", c, idStr, err.Error())
 		return
 	}
 
@@ -97,7 +97,7 @@ func handleRequestLog(c *Context, l *Logger, log sdk.ABCIMessageLog) {
 
 	reqs, err := GetRawRequests(c, l, log)
 	if err != nil {
-		l.Error(":skull: Failed to parse raw requests with error: %s", err.Error())
+		l.Error(":skull: Failed to parse raw requests with error: %s", c, err.Error())
 	}
 
 	keyIndex := c.nextKeyIndex()
@@ -123,7 +123,7 @@ func handleRequestLog(c *Context, l *Logger, log sdk.ABCIMessageLog) {
 	}
 	callData, err := hex.DecodeString(rawCallData[0])
 	if err != nil {
-		l.Error(":skull: Fail to parse call data: %s", err.Error())
+		l.Error(":skull: Fail to parse call data: %s", c, err.Error())
 	}
 
 	var clientID string
@@ -151,7 +151,7 @@ func handlePendingRequest(c *Context, l *Logger, id types.RequestID) {
 
 	req, err := GetRequest(c, l, id)
 	if err != nil {
-		l.Error(":skull: Failed to get request with error: %s", err.Error())
+		l.Error(":skull: Failed to get request with error: %s", c, err.Error())
 		return
 	}
 
@@ -167,7 +167,7 @@ func handlePendingRequest(c *Context, l *Logger, id types.RequestID) {
 
 		ds, err := GetDataSource(c, l, raw.DataSourceID)
 		if err != nil {
-			l.Error(":skull: Failed to get data source hash with error: %s", err.Error())
+			l.Error(":skull: Failed to get data source hash with error: %s", c, err.Error())
 			return
 		}
 
@@ -228,10 +228,12 @@ func handleRawRequests(c *Context, l *Logger, id types.RequestID, reqs []rawRequ
 }
 
 func handleRawRequest(c *Context, l *Logger, req rawRequest, key keys.Info, id types.RequestID, processingResultCh chan processingResult) {
+	c.updateHandlingGauge(1)
+	defer c.updateHandlingGauge(-1)
 
 	exec, err := GetExecutable(c, l, req.dataSourceHash)
 	if err != nil {
-		l.Error(":skull: Failed to load data source with error: %s", err.Error())
+		l.Error(":skull: Failed to load data source with error: %s", c, err.Error())
 		processingResultCh <- processingResult{
 			rawReport: types.NewRawReport(
 				req.externalID, 255, []byte("FAIL_TO_LOAD_DATA_SOURCE"),
@@ -244,11 +246,12 @@ func handleRawRequest(c *Context, l *Logger, req rawRequest, key keys.Info, id t
 	vmsg := NewVerificationMessage(cfg.ChainID, c.validator, id, req.externalID)
 	sig, pubkey, err := keybase.Sign(key.GetName(), ckeys.DefaultKeyPass, vmsg.GetSignBytes())
 	if err != nil {
-		l.Error(":skull: Failed to sign verify message: %s", err.Error())
+		l.Error(":skull: Failed to sign verify message: %s", c, err.Error())
 		processingResultCh <- processingResult{
 			rawReport: types.NewRawReport(req.externalID, 255, nil),
 			err:       err,
 		}
+		return
 	}
 
 	result, err := c.executor.Exec(exec, req.calldata, map[string]interface{}{
@@ -261,11 +264,12 @@ func handleRawRequest(c *Context, l *Logger, req rawRequest, key keys.Info, id t
 	})
 
 	if err != nil {
-		l.Error(":skull: Failed to execute data source script: %s", err.Error())
+		l.Error(":skull: Failed to execute data source script: %s", c, err.Error())
 		processingResultCh <- processingResult{
 			rawReport: types.NewRawReport(req.externalID, 255, nil),
 			err:       err,
 		}
+		return
 	} else {
 		l.Debug(
 			":sparkles: Query data done with calldata: %q, result: %q, exitCode: %d",

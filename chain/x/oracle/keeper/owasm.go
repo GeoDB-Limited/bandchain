@@ -72,7 +72,7 @@ func (k Keeper) PrepareRequest(ctx sdk.Context, r types.RequestWithSenderSpec) e
 	code := k.GetFile(script.Filename)
 
 	maxDataSize := k.GetParamUint64(ctx, types.KeyMaxDataSize)
-	output, err := owasm.Prepare(code, types.WasmPrepareGas, int64(maxDataSize), env)
+	output, err := k.owasmVM.Prepare(code, types.WasmPrepareGas, int64(maxDataSize), env)
 	if err != nil {
 		return sdkerrors.Wrapf(types.ErrBadWasmExecution, err.Error())
 	}
@@ -136,7 +136,7 @@ func (k Keeper) ResolveRequest(ctx sdk.Context, reqID types.RequestID) {
 	script := k.MustGetOracleScript(ctx, req.OracleScriptID)
 	code := k.GetFile(script.Filename)
 	maxDataSize := k.GetParamUint64(ctx, types.KeyMaxDataSize)
-	output, err := owasm.Execute(code, types.WasmExecuteGas, int64(maxDataSize), env)
+	output, err := k.owasmVM.Execute(code, types.WasmExecuteGas, int64(maxDataSize), env)
 	if err != nil {
 		k.ResolveFailure(ctx, reqID, err.Error())
 	} else if env.Retdata == nil {

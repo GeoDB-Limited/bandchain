@@ -10,7 +10,7 @@ import (
 )
 
 func compile(code []byte) []byte {
-	compiled, err := api.Compile(code, types.MaxCompiledWasmCodeSize)
+	compiled, err := OwasmVM.Compile(code, types.MaxCompiledWasmCodeSize)
 	if err != nil {
 		panic(err)
 	}

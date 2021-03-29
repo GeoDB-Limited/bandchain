@@ -10,6 +10,7 @@ import (
 
 	"github.com/GeoDB-Limited/odincore/chain/pkg/filecache"
 	"github.com/GeoDB-Limited/odincore/chain/x/oracle/types"
+	owasm "github.com/bandprotocol/go-owasm/api"
 )
 
 const (
@@ -25,6 +26,7 @@ type Keeper struct {
 	supplyKeeper     types.SupplyKeeper
 	stakingKeeper    types.StakingKeeper
 	distrKeeper      types.DistrKeeper
+	owasmVM          *owasm.Vm
 }
 
 // NewKeeper creates a new oracle Keeper instance.
@@ -32,6 +34,7 @@ func NewKeeper(
 	cdc *codec.Codec, key sdk.StoreKey, fileDir string, feeCollectorName string,
 	paramSpace params.Subspace, supplyKeeper types.SupplyKeeper,
 	stakingKeeper types.StakingKeeper, distrKeeper types.DistrKeeper,
+	owasmVM *owasm.Vm,
 ) Keeper {
 
 	if addr := supplyKeeper.GetModuleAddress(types.ModuleName); addr == nil {
@@ -50,6 +53,7 @@ func NewKeeper(
 		supplyKeeper:     supplyKeeper,
 		stakingKeeper:    stakingKeeper,
 		distrKeeper:      distrKeeper,
+		owasmVM:          owasmVM,
 	}
 }
 
